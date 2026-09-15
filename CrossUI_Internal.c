@@ -8,9 +8,11 @@
 #include <string.h>
 #endif
 
-static cuiWidget *WidgetList = NULL;
-static unsigned WidgetCount = 0;
-
+static struct
+	{
+	cuiWidget *First, *Last;
+	unsigned Count;
+	} WidgetList = {0};
 
 static void cuiInternal_AddChildToParent ( cuiWidget *Parent, cuiWidget *Child )
 	{
@@ -28,7 +30,7 @@ static void cuiInternal_RemoveChildFromParent ( cuiWidget *Parent, cuiWidget *Ch
 		{
 		if ( Parent->Children[Iterator] == Child )
 			{
-			ARRAY_DELETE_AND_SWAP ( Parent->Children, Parent->ChildCount, Iterator );
+			ARRAY_DELETE_AND_SHIFT ( Parent->Children, Parent->ChildCount, Iterator );
 			return;
 			}
 		}
@@ -38,12 +40,14 @@ static void cuiInternal_AddWidgetToList ( cuiWidget *Widget )
 	{
 	if ( Widget == NULL )
 		return;
-	Widget->Previous = NULL;
-	Widget->Next = WidgetList;
-	if ( WidgetList != NULL )
-		WidgetList->Previous = Widget;
-	WidgetList = Widget;
-	++WidgetCount;
+	Widget->Previous = WidgetList.Last;
+	Widget->Next = NULL;
+	if ( WidgetList.Last != NULL )
+		WidgetList.Last->Next = Widget;
+	else
+		WidgetList.First = WidgetList.Last = Widget;
+
+	++WidgetList.Count;
 	}
 
 static void cuiInternal_RemoveWidgetFromList ( cuiWidget *Widget )
@@ -51,14 +55,38 @@ static void cuiInternal_RemoveWidgetFromList ( cuiWidget *Widget )
 	if ( Widget == NULL )
 		return;
 
-	if ( WidgetList == Widget )
-		WidgetList = Widget->Next;
+	if ( WidgetList.First == Widget )
+		WidgetList.First = Widget->Next;
+	if ( WidgetList.Last == Widget )
+		WidgetList.Last == Widget->Previous;
 
 	if ( Widget->Next != NULL )
 		Widget->Next->Previous = Widget->Previous;
 	if ( Widget->Previous != NULL )
 		Widget->Previous->Next = Widget->Next;
-	--WidgetCount;
+	--WidgetList.Count;
+	}
+
+void cuiInternal_SetWidgetText ( cuiWidget *Widget, const char *Text )
+	{
+	if ( Text == NULL )
+		{
+		SAFE_DEL_C ( Widget->Text );
+		}
+	else
+		{
+		char *Copy = strdup ( Text );
+		if ( Copy == NULL )
+			return;
+		free ( Widget->Text );
+		Widget->Text = Copy;
+		}
+	cuiBackend_SetText ( Widget, Widget->Text );
+	}
+
+void cuiInternal_GetText ( cuiWidget *Widget, char *Buffer, const unsigned BufferSize )
+	{
+	cuiBackend_GetText ( Widget, Buffer, BufferSize );
 	}
 
 cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height )
@@ -71,7 +99,8 @@ cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *Parent
 	NewWidget->Y = Y;
 	NewWidget->Width = Width;
 	NewWidget->Height = Height;
-	NewWidget->Text = strdup ( Text );
+	if ( Text != NULL )
+		NewWidget->Text = strdup ( Text );
 	NewWidget->Parent = ParentWidget;
 	cuiInternal_AddChildToParent ( ParentWidget, NewWidget );
 	NewWidget->Enabled = true;
@@ -102,15 +131,15 @@ void cuiInternal_DestroyWidgetEntry ( cuiWidget *Widget )
 
 void cuiInternal_DestroyAllWidgets ( void )
 	{
-	while ( WidgetCount > 0 )
+	while ( WidgetList.Count > 0 )
 		{
-		cuiInternal_DestroyWidgetEntry ( WidgetList );
+		cuiInternal_DestroyWidgetEntry ( WidgetList.First );
 		}
 	}
 
 unsigned cuiInternal_GetWidgetCount ( void )
 	{
-	return WidgetCount;
+	return WidgetList.Count;
 	}
 
 cuiHandle cuiInternal_WidgetToHandle ( const cuiWidget *Widget )

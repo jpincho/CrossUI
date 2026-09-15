@@ -24,8 +24,26 @@ typedef struct cuiWidget
 	unsigned ChildCapacity;
 
 	cuiWidgetCallbacks Callbacks;
+
+	union
+		{
+		struct
+			{
+			float Min, Max, Value;
+			} SliderData;
+		struct
+			{
+			bool Checked;
+			} CheckBoxData;
+		struct
+			{
+			float Value;
+			} ProgressBarData;
+
+		};
+
 	/*
-	int SliderMin, SliderMax, SliderValue;
+
 	/*
 	void *UserData;
 	char **Items;
@@ -34,15 +52,15 @@ typedef struct cuiWidget
 	int ProgressValue;
 	int SelectedIndex;
 	bool Checked;
-	cuiCallback OnClick;
 	void *OnClickUserData;
 	cuiCallback OnChange;
 	void *OnChangeUserData;
-	cuiCallback OnClose;
 	void *OnCloseUserData;*/
 	cuiWidget *Previous, *Next;
 	} cuiWidget;
 
+void cuiInternal_SetWidgetText ( cuiWidget *Widget, const char *Text );
+void cuiInternal_GetText ( cuiWidget *Widget, char *Buffer, const unsigned BufferSize );
 
 cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
 void cuiInternal_DestroyWidgetEntry ( cuiWidget *Widget );
@@ -50,4 +68,4 @@ void cuiInternal_DestroyAllWidgets ( void );
 unsigned cuiInternal_GetWidgetCount ( void );
 cuiHandle cuiInternal_WidgetToHandle ( const cuiWidget *Widget );
 cuiWidget *cuiInternal_HandleToWidget ( const cuiHandle Handle );
-const char *Stringify_cuiWidgetType(const cuiWidgetType Value );
+const char *Stringify_cuiWidgetType ( const cuiWidgetType Value );

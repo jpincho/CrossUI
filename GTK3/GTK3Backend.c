@@ -2,7 +2,11 @@
 #include <Platform/Platform.h>
 #include <Platform/Logger.h>
 #include <stdlib.h>
-#include <gtk/gtk.h>
+#include "GTK3Slider.h"
+#include "GTK3ProgressBar.h"
+#include "GTK3CheckBox.h"
+#include "GTK3Button.h"
+#include "GTK3Label.h"
 
 bool cuiBackend_Initialize ( void )
 	{
@@ -62,17 +66,7 @@ static gboolean OnConfigure ( GtkWidget *Native, GdkEvent *Event, gpointer Data 
 	return TRUE;
 	}
 
-static void OnButtonClicked ( GtkButton *Button, gpointer Data )
-	{
-	cuiWidget *Widget = ( cuiWidget * ) Data;
-	UNUSED ( Button );
-	if ( Widget->Callbacks.Clicked )
-		{
-		Widget->Callbacks.Clicked ( cuiInternal_WidgetToHandle ( Widget ) );
-		}
-	}
-
-static GtkWidget *GetContainer ( cuiWidget *Widget )
+GtkWidget *GetContainer ( cuiWidget *Widget )
 	{
 	cuiWidget *Parent = Widget->Parent;
 	while ( Parent != NULL )
@@ -82,6 +76,14 @@ static GtkWidget *GetContainer ( cuiWidget *Widget )
 		Parent = Parent->Parent;
 		}
 	return NULL;
+	}
+
+GtkWidget *GetInnermostWidget ( cuiWidget *Widget )
+	{
+	if ( Widget->NativeInnerHandle != NULL )
+		return GTK_WIDGET ( Widget->NativeInnerHandle );
+	ASSERT_FAIL ( Widget->NativeHandle != NULL );
+	return GTK_WIDGET ( Widget->NativeHandle );
 	}
 
 static void PlaceWidget ( cuiWidget *Widget, GtkWidget *Native )
@@ -99,7 +101,6 @@ static void PlaceWidget ( cuiWidget *Widget, GtkWidget *Native )
 
 bool cuiBackend_CreateNativeWidget ( cuiWidget *Widget )
 	{
-	GtkWidget *Native = NULL;
 	LOG_DEBUG ( "Setting up widget %p as a %s", Widget, Stringify_cuiWidgetType ( Widget->Type ) );
 
 	switch ( Widget->Type )
@@ -107,7 +108,7 @@ bool cuiBackend_CreateNativeWidget ( cuiWidget *Widget )
 		case cuiType_Window:
 			{
 			GtkWidget *Fixed = gtk_fixed_new ();
-			Native = gtk_window_new ( GTK_WINDOW_TOPLEVEL );
+			GtkWidget *Native = gtk_window_new ( GTK_WINDOW_TOPLEVEL );
 			gtk_window_set_title ( GTK_WINDOW ( Native ), Widget->Text );
 			gtk_window_set_default_size ( GTK_WINDOW ( Native ), ( gint ) Widget->Width, ( gint ) Widget->Height );
 			if ( ( Widget->X >= 0 ) && ( Widget->Y >= 0 ) )
@@ -123,8 +124,32 @@ bool cuiBackend_CreateNativeWidget ( cuiWidget *Widget )
 			}
 		case cuiType_Button:
 			{
-			Native = gtk_button_new_with_label ( Widget->Text );
-			g_signal_connect ( Native, "clicked", G_CALLBACK ( OnButtonClicked ), Widget );
+			if ( cuiBackend_Button_Create ( Widget ) == false )
+				return false;
+			break;
+			}
+		case cuiType_Label:
+			{
+			if ( cuiBackend_Label_Create ( Widget ) == false )
+				return false;
+			break;
+			}
+		case cuiType_ProgressBar:
+			{
+			if ( cuiBackend_ProgressBar_Create ( Widget ) == false )
+				return false;
+			break;
+			}
+		case cuiType_Slider:
+			{
+			if ( cuiBackend_Slider_Create ( Widget ) == false )
+				return false;
+			break;
+			}
+		case cuiType_CheckBox:
+			{
+			if ( cuiBackend_CheckBox_Create ( Widget ) == false )
+				return false;
 			break;
 			}
 
@@ -132,9 +157,8 @@ bool cuiBackend_CreateNativeWidget ( cuiWidget *Widget )
 			return false;
 		}
 
-	PlaceWidget ( Widget, Native );
-	Widget->NativeHandle = Native;
-	Widget->NativeInnerHandle = Native;
+	PlaceWidget ( Widget, Widget->NativeHandle );
+	Widget->NativeInnerHandle = Widget->NativeHandle;
 	return true;
 	}
 
@@ -150,7 +174,6 @@ void cuiBackend_DestroyNativeWidget ( cuiWidget *Widget )
 	Widget->NativeInnerHandle = NULL;
 	gtk_widget_destroy ( Native );
 	}
-
 
 bool cuiBackend_Update ( bool Wait )
 	{
@@ -185,3 +208,107 @@ void cuiBackend_SetEnabled ( cuiWidget *Widget, const bool Enabled )
 	Widget->Enabled = Enabled;
 	gtk_widget_set_sensitive ( Native, Widget->Enabled ? TRUE : FALSE );
 	}
+
+void cuiBackend_SetText ( cuiWidget *Widget, const char *Text )
+	{
+	GtkWidget *Native = GTK_WIDGET ( Widget->NativeHandle );
+	if ( Widget->NativeInnerHandle != NULL )
+		Native = GTK_WIDGET ( Widget->NativeInnerHandle );
+	if ( Native == NULL )
+		return;
+	static char EmptyString[] = "";
+	if ( Text == NULL )
+		Text = EmptyString;
+
+	switch ( Widget->Type )
+		{
+		case cuiType_Window:
+			gtk_window_set_title ( GTK_WINDOW ( Widget->NativeHandle ), Text );
+			break;
+		case cuiType_Label:
+			gtk_label_set_text ( GTK_LABEL ( Native ), Text );
+			break;
+		case cuiType_Button:
+			gtk_button_set_label ( GTK_BUTTON ( Native ), Text );
+			break;
+		case cuiType_CheckBox:
+			gtk_button_set_label ( GTK_BUTTON ( Native ), Text );
+			break;
+		case cuiType_TextBox:
+			gtk_entry_set_text ( GTK_ENTRY ( Native ), Text );
+			break;
+		case cuiType_TextArea:
+			{
+			GtkTextBuffer *Buffer = gtk_text_view_get_buffer ( GTK_TEXT_VIEW ( Native ) );
+			gtk_text_buffer_set_text ( Buffer, Text, -1 );
+			break;
+			}
+		case cuiType_GroupBox:
+			gtk_frame_set_label ( GTK_FRAME ( Widget->NativeHandle ), Text );
+			break;
+		default:
+			break;
+		}
+	}
+
+void cuiBackend_GetText ( cuiWidget *Widget, char *Buffer, const unsigned BufferSize )
+	{
+	GtkWidget *Native = GetInnermostWidget ( Widget );
+	const char *Text = "";
+	if ( Native == NULL )
+		{
+		if ( Widget->Text == NULL )
+			{
+			Buffer[0] = 0;
+			return;
+			}
+		strncpy ( Buffer, Widget->Text, BufferSize );
+		return;
+		}
+	switch ( Widget->Type )
+		{
+		case cuiType_Window:
+			Text = gtk_window_get_title ( GTK_WINDOW ( Widget->NativeHandle ) );
+			strncpy ( Buffer, Text, BufferSize );
+			break;
+		case cuiType_Label:
+			Text = gtk_label_get_text ( GTK_LABEL ( Native ) );
+			strncpy ( Buffer, Text, BufferSize );
+			break;
+		case cuiType_Button:
+		case cuiType_CheckBox:
+			Text = gtk_button_get_label ( GTK_BUTTON ( Native ) );
+			strncpy ( Buffer, Text, BufferSize );
+			break;
+		case cuiType_TextBox:
+			Text = gtk_entry_get_text ( GTK_ENTRY ( Native ) );
+			strncpy ( Buffer, Text, BufferSize );
+			break;
+		case cuiType_TextArea:
+			{
+			GtkTextBuffer *TextBuffer = gtk_text_view_get_buffer ( GTK_TEXT_VIEW ( Native ) );
+			GtkTextIter Start, End;
+			char *Allocated;
+			gtk_text_buffer_get_bounds ( TextBuffer, &Start, &End );
+			Allocated = gtk_text_buffer_get_text ( TextBuffer, &Start, &End, FALSE );
+			strncpy ( Buffer, Allocated, BufferSize );
+			g_free ( Allocated );
+			break;
+			}
+		case cuiType_GroupBox:
+			Text = gtk_frame_get_label ( GTK_FRAME ( Widget->NativeHandle ) );
+			strncpy ( Buffer, Text, BufferSize );
+			break;
+		default:
+			Text = Widget->Text;
+			strncpy ( Buffer, Text, BufferSize );
+			break;
+		}
+	}
+
+void cuiBackend_SetFocus ( cuiWidget *Widget )
+	{
+	GtkWidget *Native = GetInnermostWidget ( Widget );
+	gtk_widget_grab_focus ( Native );
+	}
+

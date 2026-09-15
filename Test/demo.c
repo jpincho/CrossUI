@@ -1,6 +1,8 @@
 #include <CrossUI.h>
 #include <stdio.h>
 
+cuiHandle ProgressBarHandle;
+
 void OnWindowResized ( const cuiHandle WindowHandle, const unsigned Width, const unsigned Height )
 	{
 	printf ( "Window %p resized to %ux%u\n", WindowHandle, Width, Height );
@@ -25,6 +27,17 @@ void OnShutdown ( const cuiHandle WindowHandle )
 	{
 	printf ( "Forcing shutdown\n" );
 	cuiShutdown();
+	}
+
+void OnCheckChanged ( const cuiHandle WindowHandle, const bool State )
+	{
+	printf ( "Checkbox changed to %s\n", State ? "true" : "false" );
+	}
+
+void OnSliderChanged ( const cuiHandle WidgetHandle, const float Value )
+	{
+	printf ( "Slider changed - %f\n", Value );
+	cuiSetProgressBarValue ( ProgressBarHandle, Value );
 	}
 
 int main ( int argc, char *argv[] )
@@ -59,6 +72,18 @@ int main ( int argc, char *argv[] )
 	Callbacks = cuiGetWidgetCallbacks ( ShutdownButton );
 	Callbacks.Clicked = &OnShutdown;
 	cuiSetWidgetCallbacks ( ShutdownButton, Callbacks );
+
+	cuiHandle Slider = cuiCreateSlider ( WindowHandle, 0, 50, 100, 20, 0, 100, 46 );
+	Callbacks = cuiGetWidgetCallbacks ( Slider );
+	Callbacks.SliderChangedValue = OnSliderChanged;
+	cuiSetWidgetCallbacks ( Slider, Callbacks );
+
+	cuiHandle CheckBox = cuiCreateCheckbox ( WindowHandle, "My check", 0, 100, 100, 20 );
+	Callbacks = cuiGetWidgetCallbacks ( CheckBox );
+	Callbacks.CheckChanged = OnCheckChanged;
+	cuiSetWidgetCallbacks ( CheckBox, Callbacks );
+
+	ProgressBarHandle = cuiCreateProgressBar ( WindowHandle, 0, 100, 100, 20 );
 
 	while ( cuiUpdate ( true ) == true )
 		{}
