@@ -1,46 +1,45 @@
-#include "GTK3Backend.h"
-#include "GTK3Slider.h"
-#include <Platform/Platform.h>
-#include <Platform/Logger.h>
-#include <stdlib.h>
-#include <gtk/gtk.h>
+#include "GTK3BackendInternal.h"
 
 static void OnSliderChangedValue ( GtkRange *Range, gpointer Data )
 	{
 	cuiWidget *Widget = ( cuiWidget * ) Data;
-	Widget->SliderData.Value = gtk_range_get_value ( Range );
 	if ( Widget->Callbacks.SliderChangedValue )
-		Widget->Callbacks.SliderChangedValue ( cuiInternal_WidgetToHandle ( Widget ), Widget->SliderData.Value );
+		Widget->Callbacks.SliderChangedValue ( Widget, gtk_range_get_value ( Range ) );
 	}
 
-bool cuiBackend_Slider_Create ( cuiWidget *Widget )
+cuiWidget *cuiCreateSlider ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height, const float MinValue, const float MaxValue, const float Value )
 	{
-	Widget->NativeHandle = NULL;
-	Widget->NativeHandle = gtk_scale_new_with_range ( GTK_ORIENTATION_HORIZONTAL, Widget->SliderData.Min, Widget->SliderData.Max, 1 );
-	gtk_range_set_value ( GTK_RANGE ( Widget->NativeHandle ), Widget->SliderData.Value );
+	cuiWidget *Widget = cuiInternal_CreateWidgetEntry ( cuiType_Slider, ParentWidget, NULL, X, Y, Width, Height );
+	if ( Widget == NULL )
+		return NULL;
+	Widget->NativeHandle = gtk_scale_new_with_range ( GTK_ORIENTATION_HORIZONTAL, MIN ( MinValue, MaxValue ), MAX ( MinValue, MaxValue ), 1 );
+	gtk_range_set_value ( GTK_RANGE ( Widget->NativeHandle ), Value );
 	gtk_scale_set_draw_value ( GTK_SCALE ( Widget->NativeHandle ), TRUE );
 	g_signal_connect ( Widget->NativeHandle, "value-changed", G_CALLBACK ( OnSliderChangedValue ), Widget );
-	return true;
+	FinishedCreatingNewWidget ( Widget );
+	return Widget;
 	}
 
-void cuiBackend_Slider_SetRange ( cuiWidget *Widget, const float Min, const float Max )
+void cuiSetSliderRange ( cuiWidget *Widget, const float MinValue, const float MaxValue )
 	{
-	GtkWidget *Native = GetInnermostWidget ( Widget );
+	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
-	gtk_range_set_range ( GTK_RANGE ( Native ), Min, Max );
+	GtkWidget *Native = GetInnermostWidget ( Widget );
+	gtk_range_set_range ( GTK_RANGE ( Native ), MIN ( MinValue, MaxValue ), MAX ( MinValue, MaxValue ) );
 	}
 
-void cuiBackend_Slider_SetValue ( cuiWidget *Widget, const float Value )
+void cuiSetSliderValue ( cuiWidget *Widget, const float Value )
 	{
-	GtkWidget *Native = GetInnermostWidget ( Widget );
+	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
+	GtkWidget *Native = GetInnermostWidget ( Widget );
 	gtk_range_set_value ( GTK_RANGE ( Native ), Value );
 	}
 
-float cuiBackend_Slider_GetValue ( cuiWidget *Widget )
+float cuiGetSliderValue ( const cuiWidget *Widget )
 	{
-	GtkWidget *Native = GetInnermostWidget ( Widget );
+	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
+	GtkWidget *Native = GetInnermostWidget ( Widget );
 	return gtk_range_get_value ( GTK_RANGE ( Native ) );
 	}
-

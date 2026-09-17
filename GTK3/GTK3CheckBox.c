@@ -1,36 +1,37 @@
-#include "GTK3Backend.h"
-#include "GTK3CheckBox.h"
-#include <Platform/Platform.h>
-#include <Platform/Logger.h>
-#include <stdlib.h>
-#include <gtk/gtk.h>
+#include "GTK3BackendInternal.h"
 
 static void OnCheckBoxToggled ( GtkToggleButton *Button, gpointer Data )
 	{
 	cuiWidget *Widget = ( cuiWidget * ) Data;
-	Widget->CheckBoxData.Checked = gtk_toggle_button_get_active ( Button ) ? true : false;
+	bool Checked = gtk_toggle_button_get_active ( Button ) ? true : false;
 	if ( Widget->Callbacks.CheckChanged )
-		Widget->Callbacks.CheckChanged ( cuiInternal_WidgetToHandle ( Widget ), Widget->CheckBoxData.Checked );
+		Widget->Callbacks.CheckChanged ( Widget, Checked );
 	}
 
-bool cuiBackend_CheckBox_Create ( cuiWidget *Widget )
+cuiWidget *cuiCreateCheckbox ( cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height, const bool State )
 	{
-	Widget->NativeHandle = gtk_check_button_new_with_label ( Widget->Text );
-	gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON ( Widget->NativeHandle ), Widget->CheckBoxData.Checked ? TRUE : FALSE );
+	cuiWidget *Widget = cuiInternal_CreateWidgetEntry ( cuiType_CheckBox, ParentWidget, Text, X, Y, Width, Height );
+	if ( Widget == NULL )
+		return NULL;
+	Widget->NativeHandle = gtk_check_button_new_with_label ( EMPTY_STRING_IF_NULL ( Widget->Text ) );
+	gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON ( Widget->NativeHandle ), State ? TRUE : FALSE );
 	g_signal_connect ( Widget->NativeHandle, "toggled", G_CALLBACK ( OnCheckBoxToggled ), Widget );
-	return true;
+	FinishedCreatingNewWidget ( Widget );
+	return Widget;
 	}
 
-void cuiBackend_CheckBox_SetState ( cuiWidget *Widget, const bool State )
+void cuiSetCheckboxState ( cuiWidget *Widget, const bool State )
 	{
-	GtkWidget *Native = GetInnermostWidget ( Widget );
+	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_CheckBox );
+	GtkWidget *Native = GetInnermostWidget ( Widget );
 	gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON ( Native ), State ? TRUE : FALSE );
 	}
 
-bool cuiBackend_CheckBox_GetState ( cuiWidget *Widget )
+bool cuiGetCheckboxState ( const cuiWidget *Widget )
 	{
-	GtkWidget *Native = GetInnermostWidget ( Widget );
+	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_CheckBox );
+	GtkWidget *Native = GetInnermostWidget ( Widget );
 	return gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON ( Native ) ) ? true : false;
 	}

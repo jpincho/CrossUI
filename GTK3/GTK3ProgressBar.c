@@ -1,25 +1,27 @@
-#include "GTK3Backend.h"
-#include "GTK3ProgressBar.h"
-#include <Platform/Platform.h>
-#include <Platform/Logger.h>
-#include <stdlib.h>
-#include <gtk/gtk.h>
+#include "GTK3BackendInternal.h"
 
-bool cuiBackend_ProgressBar_Create ( cuiWidget *Widget )
+cuiWidget *cuiCreateProgressBar ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height )
 	{
+	cuiWidget *Widget = cuiInternal_CreateWidgetEntry ( cuiType_ProgressBar, ParentWidget, NULL, X, Y, Width, Height );
+	if ( Widget == NULL )
+		return NULL;
 	Widget->NativeHandle = gtk_progress_bar_new ();
-	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), Widget->ProgressBarData.Value / 100.0 );
+	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), 0.0 );
 	gtk_progress_bar_set_show_text ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), TRUE );
-	return true;
+	FinishedCreatingNewWidget ( Widget );
+	return Widget;
 	}
 
-void cuiBackend_ProgressBar_SetValue ( cuiWidget *Widget, const float Value )
+void cuiSetProgressBarValue ( cuiWidget *Widget, const float Value )
 	{
-	GtkWidget *Native = GetInnermostWidget ( Widget );
+	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_ProgressBar );
+	GtkWidget *Native = GetInnermostWidget ( Widget );
 
 	char Label[16];
-	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Native ), Value / 100.0 );
-	snprintf ( Label, sizeof ( Label ), "%f%%", Value );
+	float FinalValue = CLAMP ( Value, 0.0f, 100.0f );
+
+	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Native ), FinalValue / 100.0 );
+	snprintf ( Label, sizeof ( Label ), "%6.3f%%", FinalValue );
 	gtk_progress_bar_set_text ( GTK_PROGRESS_BAR ( Native ), Label );
 	}

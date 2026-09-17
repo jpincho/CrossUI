@@ -1,12 +1,15 @@
 #include "CrossUI_Internal.h"
-#include "CrossUI_BackendFunctions.h"
+#include "CrossUI_InternalBackendFunctions.h"
 #include <Platform/Platform.h>
 #include <Platform/ArrayUtils.h>
+#include <Platform/Logger.h>
 
 #if defined (PLATFORM_COMPILER_GNU)
 #include <stdlib.h>
 #include <string.h>
 #endif
+
+bool Initialized = false;
 
 static struct
 	{
@@ -45,8 +48,8 @@ static void cuiInternal_AddWidgetToList ( cuiWidget *Widget )
 	if ( WidgetList.Last != NULL )
 		WidgetList.Last->Next = Widget;
 	else
-		WidgetList.First = WidgetList.Last = Widget;
-
+		WidgetList.First = Widget;
+	WidgetList.Last = Widget;
 	++WidgetList.Count;
 	}
 
@@ -58,7 +61,7 @@ static void cuiInternal_RemoveWidgetFromList ( cuiWidget *Widget )
 	if ( WidgetList.First == Widget )
 		WidgetList.First = Widget->Next;
 	if ( WidgetList.Last == Widget )
-		WidgetList.Last == Widget->Previous;
+		WidgetList.Last = Widget->Previous;
 
 	if ( Widget->Next != NULL )
 		Widget->Next->Previous = Widget->Previous;
@@ -67,30 +70,13 @@ static void cuiInternal_RemoveWidgetFromList ( cuiWidget *Widget )
 	--WidgetList.Count;
 	}
 
-void cuiInternal_SetWidgetText ( cuiWidget *Widget, const char *Text )
-	{
-	if ( Text == NULL )
-		{
-		SAFE_DEL_C ( Widget->Text );
-		}
-	else
-		{
-		char *Copy = strdup ( Text );
-		if ( Copy == NULL )
-			return;
-		free ( Widget->Text );
-		Widget->Text = Copy;
-		}
-	cuiBackend_SetText ( Widget, Widget->Text );
-	}
-
-void cuiInternal_GetText ( cuiWidget *Widget, char *Buffer, const unsigned BufferSize )
-	{
-	cuiBackend_GetText ( Widget, Buffer, BufferSize );
-	}
-
 cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height )
 	{
+	if ( Initialized == false )
+		{
+		LOG_ERROR ( "CrossUI not initialized" );
+		return NULL;
+		}
 	cuiWidget *NewWidget = ( cuiWidget * ) calloc ( 1, sizeof ( cuiWidget ) );
 	if ( NewWidget == NULL )
 		return NULL;
@@ -102,9 +88,9 @@ cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *Parent
 	if ( Text != NULL )
 		NewWidget->Text = strdup ( Text );
 	NewWidget->Parent = ParentWidget;
-	cuiInternal_AddChildToParent ( ParentWidget, NewWidget );
-	NewWidget->Enabled = true;
 	NewWidget->Visible = true;
+	NewWidget->Enabled = true;
+	cuiInternal_AddChildToParent ( ParentWidget, NewWidget );
 
 	cuiInternal_AddWidgetToList ( NewWidget );
 	return NewWidget;
@@ -112,9 +98,14 @@ cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *Parent
 
 void cuiInternal_DestroyWidgetEntry ( cuiWidget *Widget )
 	{
-	if ( ( Widget == NULL ) || Widget->BeingDestroyed )
+	if ( ( Widget == NULL ) || (Widget->BeingDestroyed) )
 		return;
 	Widget->BeingDestroyed = true;
+
+	if ( Widget->Callbacks.Destroyed )
+		{
+		Widget->Callbacks.Destroyed ( Widget );
+		}
 
 	while ( Widget->ChildCount > 0 )
 		cuiInternal_DestroyWidgetEntry ( Widget->Children[Widget->ChildCount - 1] );
@@ -142,16 +133,6 @@ unsigned cuiInternal_GetWidgetCount ( void )
 	return WidgetList.Count;
 	}
 
-cuiHandle cuiInternal_WidgetToHandle ( const cuiWidget *Widget )
-	{
-	return ( cuiHandle ) Widget;
-	}
-
-cuiWidget *cuiInternal_HandleToWidget ( const cuiHandle Handle )
-	{
-	return ( cuiWidget* ) Handle;
-	}
-
 const char *Stringify_cuiWidgetType ( const cuiWidgetType Value )
 	{
 	switch ( Value )
@@ -159,18 +140,12 @@ const char *Stringify_cuiWidgetType ( const cuiWidgetType Value )
 #define STRINGIFY(X) case cuiType_##X:return #X;
 			STRINGIFY ( Dead );
 			STRINGIFY ( Window );
-			STRINGIFY ( Label );
 			STRINGIFY ( Button );
 			STRINGIFY ( CheckBox );
-			STRINGIFY ( TextBox );
-			STRINGIFY ( TextArea );
 			STRINGIFY ( ComboBox );
-			STRINGIFY ( ListBox );
-			STRINGIFY ( Tree );
 			STRINGIFY ( Slider );
 			STRINGIFY ( ProgressBar );
-			STRINGIFY ( GroupBox );
-			STRINGIFY ( Panel );
+			STRINGIFY ( Label );
 #undef STRINGIFY
 		}
 	return "Unknown cuiWidgetType";

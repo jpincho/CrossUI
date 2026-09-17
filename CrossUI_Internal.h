@@ -2,8 +2,6 @@
 #include <stdbool.h>
 #include "CrossUI.h"
 
-typedef struct cuiWidget cuiWidget;
-
 typedef struct cuiWidget
 	{
 	cuiWidgetType Type;
@@ -25,25 +23,6 @@ typedef struct cuiWidget
 
 	cuiWidgetCallbacks Callbacks;
 
-	union
-		{
-		struct
-			{
-			float Min, Max, Value;
-			} SliderData;
-		struct
-			{
-			bool Checked;
-			} CheckBoxData;
-		struct
-			{
-			float Value;
-			} ProgressBarData;
-
-		};
-
-	/*
-
 	/*
 	void *UserData;
 	char **Items;
@@ -59,13 +38,15 @@ typedef struct cuiWidget
 	cuiWidget *Previous, *Next;
 	} cuiWidget;
 
-void cuiInternal_SetWidgetText ( cuiWidget *Widget, const char *Text );
-void cuiInternal_GetText ( cuiWidget *Widget, char *Buffer, const unsigned BufferSize );
+extern bool Initialized;
+
+bool cuiBackend_Initialize ( void );
+void cuiBackend_Shutdown ( void );
 
 cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
 void cuiInternal_DestroyWidgetEntry ( cuiWidget *Widget );
 void cuiInternal_DestroyAllWidgets ( void );
 unsigned cuiInternal_GetWidgetCount ( void );
-cuiHandle cuiInternal_WidgetToHandle ( const cuiWidget *Widget );
-cuiWidget *cuiInternal_HandleToWidget ( const cuiHandle Handle );
 const char *Stringify_cuiWidgetType ( const cuiWidgetType Value );
+
+#define EMPTY_STRING_IF_NULL(STRING) (STRING==NULL?"":STRING)
