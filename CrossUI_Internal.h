@@ -14,8 +14,10 @@ typedef struct cuiWidget
 	bool BeingDestroyed;
 
 	void *NativeHandle;
-	void *NativeInnerHandle;
-
+	void *NativeLayoutHandle;
+	void *TextAreaBuffer;
+	void *TextAreaBufferView;
+	void *ScrollHandle;
 	cuiWidget *Parent;
 	cuiWidget **Children;
 	unsigned ChildCount;

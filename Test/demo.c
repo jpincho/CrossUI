@@ -37,12 +37,32 @@ void OnCheckChanged ( const cuiWidget *Widget, const bool State )
 void OnSliderChanged ( const cuiWidget *Widget, const float Value )
 	{
 	printf ( "Slider changed - %f\n", Value );
-	cuiSetProgressBarValue ( ProgressBarHandle, Value );
+	if ( ProgressBarHandle != NULL )
+		cuiSetProgressBarValue ( ProgressBarHandle, Value );
 	}
 
 void OnComboSelectionChanged ( const cuiWidget *Widget, const int NewIndex )
 	{
 	printf ( "Combo changed - %d\n", NewIndex );
+	}
+
+void OnTextBoxContentChanged ( const cuiWidget *Widget )
+	{
+	char Text[256];
+	cuiGetWidgetText ( Widget, Text, sizeof ( Text ) );
+	printf ( "TextBox changed - '%s'\n", Text );
+	}
+
+void OnTextAreaContentChanged ( const cuiWidget *Widget )
+	{
+	char Text[256];
+	cuiGetWidgetText ( Widget, Text, sizeof ( Text ) );
+	printf ( "TextArea changed - '%s'\n", Text );
+	}
+
+void OnListBoxSelectionChanged ( const cuiWidget *Widget, const int NewIndex )
+	{
+	printf ( "ListBox Index changed - %d\n", NewIndex );
 	}
 
 int main ( int argc, char *argv[] )
@@ -90,14 +110,32 @@ int main ( int argc, char *argv[] )
 
 	ProgressBarHandle = cuiCreateProgressBar ( WindowHandle, 0, 150, 100, 20 );
 
-	cuiWidget *ComboBox = cuiCreateCombo ( WindowHandle, 0, 200, 100, 20 );
-	cuiAddItemToCombo ( ComboBox, "GLSL" );
-	cuiAddItemToCombo ( ComboBox, "HLSL" );
-	cuiAddItemToCombo ( ComboBox, "Metal" );
-	cuiSetSelectedItemInCombo ( ComboBox, 0 );
+	cuiWidget *ComboBox = cuiCreateComboBox ( WindowHandle, 0, 200, 100, 20 );
+	cuiAddItemToComboBox ( ComboBox, "GLSL" );
+	cuiAddItemToComboBox ( ComboBox, "HLSL" );
+	cuiAddItemToComboBox ( ComboBox, "Metal" );
+	cuiSetSelectedItemInComboBox ( ComboBox, 0 );
 	Callbacks = cuiGetWidgetCallbacks ( ComboBox );
 	Callbacks.ComboBoxChanged = OnComboSelectionChanged;
 	cuiSetWidgetCallbacks ( ComboBox, Callbacks );
+
+	cuiWidget *TextArea = cuiCreateTextArea ( WindowHandle, "This is a text area", 0, 250, 100, 100 );
+	Callbacks = cuiGetWidgetCallbacks ( TextArea );
+	Callbacks.TextAreaChanged = OnTextAreaContentChanged;
+	cuiSetWidgetCallbacks ( TextArea, Callbacks );
+
+	cuiWidget *TextBox = cuiCreateTextBox ( WindowHandle, "This is a text box", 0, 350, 100, 100 );
+	Callbacks = cuiGetWidgetCallbacks ( TextBox );
+	Callbacks.TextBoxChanged = OnTextBoxContentChanged;
+	cuiSetWidgetCallbacks ( TextBox, Callbacks );
+
+	cuiWidget *ListBox = cuiCreateListBox ( WindowHandle, 120, 0, 100, 100 );
+	Callbacks = cuiGetWidgetCallbacks ( ListBox );
+	Callbacks.ListBoxSelectionChanged = OnListBoxSelectionChanged;
+	cuiAddItemToListBox ( ListBox, "Item1" );
+	cuiAddItemToListBox ( ListBox, "Item2" );
+	cuiAddItemToListBox ( ListBox, "Item3" );
+	cuiSetWidgetCallbacks ( ListBox, Callbacks );
 
 	while ( cuiUpdate ( true ) == true )
 		{}

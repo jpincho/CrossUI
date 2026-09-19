@@ -86,7 +86,14 @@ cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *Parent
 	NewWidget->Width = Width;
 	NewWidget->Height = Height;
 	if ( Text != NULL )
+		{
 		NewWidget->Text = strdup ( Text );
+		if ( NewWidget->Text == NULL )
+			{
+			free ( NewWidget );
+			return NULL;
+			}
+		}
 	NewWidget->Parent = ParentWidget;
 	NewWidget->Visible = true;
 	NewWidget->Enabled = true;
@@ -98,7 +105,7 @@ cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *Parent
 
 void cuiInternal_DestroyWidgetEntry ( cuiWidget *Widget )
 	{
-	if ( ( Widget == NULL ) || (Widget->BeingDestroyed) )
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed ) )
 		return;
 	Widget->BeingDestroyed = true;
 
@@ -146,7 +153,10 @@ const char *Stringify_cuiWidgetType ( const cuiWidgetType Value )
 			STRINGIFY ( Slider );
 			STRINGIFY ( ProgressBar );
 			STRINGIFY ( Label );
+			STRINGIFY ( TextArea );
+			STRINGIFY ( TextBox );
+			STRINGIFY ( ListBox );
 #undef STRINGIFY
 		}
-	return "Unknown cuiWidgetType";
+	return "Unknown widget type";
 	}

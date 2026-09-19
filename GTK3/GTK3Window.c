@@ -5,6 +5,9 @@ static gboolean OnDelete ( GtkWidget *Native, GdkEvent *Event, gpointer Data )
 	cuiWidget *Widget = ( cuiWidget * ) Data;
 	UNUSED ( Native );
 	UNUSED ( Event );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) )
+		return TRUE;
+
 	cuiInternal_DestroyWidgetEntry ( Widget );
 	return TRUE;
 	}
@@ -12,13 +15,19 @@ static gboolean OnDelete ( GtkWidget *Native, GdkEvent *Event, gpointer Data )
 static gboolean OnConfigure ( GtkWidget *Native, GdkEvent *Event, gpointer Data )
 	{
 	cuiWidget *Widget = ( cuiWidget * ) Data;
+	unsigned NewWidth;
+	unsigned NewHeight;
 	UNUSED ( Native );
-	if ( ( Event->configure.width != Widget->Width ) || ( Event->configure.height != Widget->Height ) )
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+		return FALSE;
+	NewWidth = ( Event->configure.width < 0 ) ? 0 : ( unsigned ) Event->configure.width;
+	NewHeight = ( Event->configure.height < 0 ) ? 0 : ( unsigned ) Event->configure.height;
+	if ( ( NewWidth != Widget->Width ) || ( NewHeight != Widget->Height ) )
 		{
 		if ( Widget->Callbacks.Resized )
-			Widget->Callbacks.Resized ( Widget, Event->configure.width, Event->configure.height );
-		Widget->Width = Event->configure.width;
-		Widget->Height = Event->configure.height;
+			Widget->Callbacks.Resized ( Widget, NewWidth, NewHeight );
+		Widget->Width = NewWidth;
+		Widget->Height = NewHeight;
 		}
 	if ( ( Event->configure.x != Widget->X ) || ( Event->configure.y != Widget->Y ) )
 		{
@@ -45,11 +54,11 @@ cuiWidget *cuiCreateWindow ( const char *Title, const int X, const int Y, const 
 	else
 		gtk_window_set_position ( GTK_WINDOW ( Native ), GTK_WIN_POS_CENTER );
 	gtk_container_add ( GTK_CONTAINER ( Native ), Fixed );
+	Widget->NativeHandle = Native;
+	Widget->NativeLayoutHandle = Fixed;
 	g_signal_connect ( Native, "delete-event", G_CALLBACK ( OnDelete ), Widget );
 	g_signal_connect ( Native, "configure-event", G_CALLBACK ( OnConfigure ), Widget );
 	gtk_widget_show_all ( Native );
-	Widget->NativeHandle = Native;
-	Widget->NativeInnerHandle = Fixed;
 	return Widget;
 	}
 

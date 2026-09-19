@@ -16,12 +16,13 @@ void cuiSetProgressBarValue ( cuiWidget *Widget, const float Value )
 	{
 	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_ProgressBar );
-	GtkWidget *Native = GetInnermostWidget ( Widget );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+		return;
 
 	char Label[16];
 	float FinalValue = CLAMP ( Value, 0.0f, 100.0f );
 
-	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Native ), FinalValue / 100.0 );
+	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), FinalValue / 100.0 );
 	snprintf ( Label, sizeof ( Label ), "%6.3f%%", FinalValue );
-	gtk_progress_bar_set_text ( GTK_PROGRESS_BAR ( Native ), Label );
+	gtk_progress_bar_set_text ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), Label );
 	}

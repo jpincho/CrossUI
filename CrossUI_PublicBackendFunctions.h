@@ -14,6 +14,9 @@ typedef enum
 	cuiType_Slider,
 	cuiType_ProgressBar,
 	cuiType_Label,
+	cuiType_TextArea,
+	cuiType_TextBox,
+	cuiType_ListBox
 	} cuiWidgetType;
 
 // Callbacks
@@ -24,6 +27,9 @@ typedef void ( *cuiClickedCallback ) ( const cuiWidget *Widget );
 typedef void ( *cuiSliderChangedValue ) ( const cuiWidget *Widget, const float Value );
 typedef void ( *cuiCheckBoxChanged ) ( const cuiWidget *Widget, const bool Value );
 typedef void ( *cuiComboBoxChanged ) ( const cuiWidget *Widget, const int Value );
+typedef void ( *cuiTextBoxChanged ) ( const cuiWidget *Widget );
+typedef void ( *cuiTextAreaChanged ) ( const cuiWidget *Widget );
+typedef void ( *cuiListBoxSelectionChanged ) ( const cuiWidget *Widget, const int Value );
 
 typedef struct
 	{
@@ -34,6 +40,9 @@ typedef struct
 	cuiSliderChangedValue SliderChangedValue;
 	cuiCheckBoxChanged CheckChanged;
 	cuiComboBoxChanged ComboBoxChanged;
+	cuiTextBoxChanged TextBoxChanged;
+	cuiTextAreaChanged TextAreaChanged;
+	cuiListBoxSelectionChanged ListBoxSelectionChanged;
 	} cuiWidgetCallbacks;
 
 const char *cuiGetBackendName ( void );
@@ -68,10 +77,28 @@ void cuiSetSliderRange ( cuiWidget *Widget, const float MinValue, const float Ma
 void cuiSetSliderValue ( cuiWidget *Widget, const float Value );
 float cuiGetSliderValue ( const cuiWidget *Widget );
 
-cuiWidget *cuiCreateCombo ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height );
-void cuiClearCombo ( const cuiWidget *Widget );
-int cuiAddItemToCombo ( cuiWidget *Widget, const char *Text );
-void cuiRemoveItemFromCombo ( cuiWidget *Widget, const int Index );
-void cuiSetSelectedItemInCombo ( const cuiWidget *Widget, const int Index );
-int cuiGetSelectedItemInCombo ( const cuiWidget *Widget );
-int cuiGetEntryCountInCombo ( const cuiWidget *Widget );
+cuiWidget *cuiCreateComboBox ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height );
+void cuiClearComboBox ( const cuiWidget *Widget );
+int cuiAddItemToComboBox ( cuiWidget *Widget, const char *Text );
+void cuiRemoveItemFromComboBox ( cuiWidget *Widget, const int Index );
+void cuiSetSelectedItemInComboBox ( const cuiWidget *Widget, const int Index );
+int cuiGetSelectedItemInComboBox ( const cuiWidget *Widget );
+int cuiGetEntryCountInComboBox ( const cuiWidget *Widget );
+
+cuiWidget *cuiCreateTextBox ( cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
+cuiWidget *cuiCreateTextArea ( cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
+cuiWidget *cuiCreateListBox ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height );
+
+void cuiClearListBoxItems ( const cuiWidget *Widget );
+int cuiAddItemToListBox ( const cuiWidget *Widget, const char *Text );
+void cuiRemoveItemFromListBox ( const cuiWidget *Widget, const int Index );
+void cuiSetSelectedItemInListBox ( const cuiWidget *Widget, const int Index );
+int cuiGetSelectedItemInListBox ( const cuiWidget *Widget );
+int cuiGetEntryCountInListBox ( const cuiWidget *Widget );
+
+/*
+GUIHandle cuiCreateListBox ( const GUIHandle Parent, const int X, const int Y, const unsigned Width, const unsigned Height );
+GUIHandle cuiCreateTree ( const GUIHandle Parent, const int X, const int Y, const unsigned Width, const unsigned Height );
+GUIHandle cuiCreateGroupBox ( const GUIHandle Parent, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
+GUIHandle cuiCreatePanel ( const GUIHandle Parent, const int X, const int Y, const unsigned Width, const unsigned Height );
+*/

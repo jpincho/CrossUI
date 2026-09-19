@@ -4,6 +4,8 @@ static void OnButtonClicked ( GtkButton *Button, gpointer Data )
 	{
 	cuiWidget *Widget = ( cuiWidget * ) Data;
 	UNUSED ( Button );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+		return;
 	if ( Widget->Callbacks.Clicked )
 		Widget->Callbacks.Clicked ( Widget );
 	}

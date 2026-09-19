@@ -3,6 +3,8 @@
 static void OnSliderChangedValue ( GtkRange *Range, gpointer Data )
 	{
 	cuiWidget *Widget = ( cuiWidget * ) Data;
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+		return;
 	if ( Widget->Callbacks.SliderChangedValue )
 		Widget->Callbacks.SliderChangedValue ( Widget, gtk_range_get_value ( Range ) );
 	}
@@ -24,22 +26,28 @@ void cuiSetSliderRange ( cuiWidget *Widget, const float MinValue, const float Ma
 	{
 	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
-	GtkWidget *Native = GetInnermostWidget ( Widget );
-	gtk_range_set_range ( GTK_RANGE ( Native ), MIN ( MinValue, MaxValue ), MAX ( MinValue, MaxValue ) );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+		return;
+
+	gtk_range_set_range ( GTK_RANGE ( Widget->NativeHandle ), MIN ( MinValue, MaxValue ), MAX ( MinValue, MaxValue ) );
 	}
 
 void cuiSetSliderValue ( cuiWidget *Widget, const float Value )
 	{
 	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
-	GtkWidget *Native = GetInnermostWidget ( Widget );
-	gtk_range_set_value ( GTK_RANGE ( Native ), Value );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+		return;
+
+	gtk_range_set_value ( GTK_RANGE ( Widget->NativeHandle ), Value );
 	}
 
 float cuiGetSliderValue ( const cuiWidget *Widget )
 	{
 	ASSERT_FAIL ( Widget != NULL );
 	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
-	GtkWidget *Native = GetInnermostWidget ( Widget );
-	return gtk_range_get_value ( GTK_RANGE ( Native ) );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+		return 0.0f;
+
+	return gtk_range_get_value ( GTK_RANGE ( Widget->NativeHandle ) );
 	}
