@@ -3,6 +3,8 @@
 
 typedef struct cuiWidget cuiWidget;
 #define cuiWidget_Invalid NULL
+typedef void *cuiTreeItem;
+#define cuiTreeItem_Root NULL
 
 typedef enum
 	{
@@ -16,7 +18,10 @@ typedef enum
 	cuiType_Label,
 	cuiType_TextArea,
 	cuiType_TextBox,
-	cuiType_ListBox
+	cuiType_ListBox,
+	cuiType_GroupBox,
+//	cuiType_Panel,
+	cuiType_Tree,
 	} cuiWidgetType;
 
 // Callbacks
@@ -30,6 +35,7 @@ typedef void ( *cuiComboBoxChanged ) ( const cuiWidget *Widget, const int Value 
 typedef void ( *cuiTextBoxChanged ) ( const cuiWidget *Widget );
 typedef void ( *cuiTextAreaChanged ) ( const cuiWidget *Widget );
 typedef void ( *cuiListBoxSelectionChanged ) ( const cuiWidget *Widget, const int Value );
+typedef void ( *cuiTreeSelectionChanged ) ( const cuiWidget *Widget, const int Value );
 
 typedef struct
 	{
@@ -43,6 +49,7 @@ typedef struct
 	cuiTextBoxChanged TextBoxChanged;
 	cuiTextAreaChanged TextAreaChanged;
 	cuiListBoxSelectionChanged ListBoxSelectionChanged;
+	cuiTreeSelectionChanged TreeSelectionChanged;
 	} cuiWidgetCallbacks;
 
 const char *cuiGetBackendName ( void );
@@ -84,21 +91,33 @@ void cuiRemoveItemFromComboBox ( cuiWidget *Widget, const int Index );
 void cuiSetSelectedItemInComboBox ( const cuiWidget *Widget, const int Index );
 int cuiGetSelectedItemInComboBox ( const cuiWidget *Widget );
 int cuiGetEntryCountInComboBox ( const cuiWidget *Widget );
+void cuiGetComboBoxItemText ( const cuiWidget *Widget, const int Index, char *Buffer, const unsigned BufferSize );
 
 cuiWidget *cuiCreateTextBox ( cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
 cuiWidget *cuiCreateTextArea ( cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
-cuiWidget *cuiCreateListBox ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height );
 
+cuiWidget *cuiCreateListBox ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height );
 void cuiClearListBoxItems ( const cuiWidget *Widget );
 int cuiAddItemToListBox ( const cuiWidget *Widget, const char *Text );
 void cuiRemoveItemFromListBox ( const cuiWidget *Widget, const int Index );
 void cuiSetSelectedItemInListBox ( const cuiWidget *Widget, const int Index );
 int cuiGetSelectedItemInListBox ( const cuiWidget *Widget );
 int cuiGetEntryCountInListBox ( const cuiWidget *Widget );
+void cuiGetListBoxItemText ( const cuiWidget *Widget, const int Index, char *Buffer, const unsigned BufferSize );
 
+cuiWidget *cuiCreateGroupBox ( cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
+
+cuiWidget *cuiCreateTree ( cuiWidget *ParentWidget, const int X, const int Y, const unsigned Width, const unsigned Height );
+void cuiClearTreeItems ( const cuiWidget *Widget );
+cuiTreeItem cuiAddItemToTree ( const cuiWidget *Widget, cuiTreeItem Parent, const char *Text );
+void cuiRemoveItemFromTree ( cuiWidget *Widget, cuiTreeItem Item );
+void cuiSetTreeItemText ( cuiWidget *Widget, cuiTreeItem Item, const char *Text );
+void cuiGetTreeItemText ( const cuiWidget *Widget, const int Index, char *Buffer, const unsigned BufferSize );
+cuiTreeItem cuiGetSelectedTreeItem ( cuiWidget *Widget );
+void cuiSetSelectedTreeItem ( cuiWidget *Widget, cuiTreeItem Item );
+void cuiExpandTree ( cuiWidget *Widget, cuiTreeItem Item, bool Expand );
+void cuiSetTreeItemData ( cuiWidget *Widget, cuiTreeItem Item, void *Data );
+void *cuiGetTreeItemData ( cuiWidget *Widget, cuiTreeItem Item );
 /*
-GUIHandle cuiCreateListBox ( const GUIHandle Parent, const int X, const int Y, const unsigned Width, const unsigned Height );
-GUIHandle cuiCreateTree ( const GUIHandle Parent, const int X, const int Y, const unsigned Width, const unsigned Height );
-GUIHandle cuiCreateGroupBox ( const GUIHandle Parent, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );
 GUIHandle cuiCreatePanel ( const GUIHandle Parent, const int X, const int Y, const unsigned Width, const unsigned Height );
 */

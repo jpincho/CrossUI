@@ -29,15 +29,21 @@ void cuiBackend_Shutdown ( void )
 void cuiBackend_DestroyNativeWidget ( cuiWidget *Widget )
 	{
 	ASSERT_FAIL ( Widget != NULL );
-	if ( ( Widget == NULL ) || ( Widget->NativeHandle == NULL ) )
+	if ( ( Widget == NULL ) )
 		return;
 
 	LOG_DEBUG ( "Destroying widget %p (%s)", Widget, Stringify_cuiWidgetType ( Widget->Type ) );
-	//if ( Widget->Type == cuiType_Tree )
-	//cuiBackend_TreeClear ( Widget );
-	g_signal_handlers_disconnect_matched ( GTK_WIDGET ( Widget->NativeHandle ), G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, Widget );
-	gtk_widget_destroy ( GTK_WIDGET ( Widget->NativeHandle ) );
+	if ( Widget->Type == cuiType_Tree )
+		cuiClearTreeItems ( Widget );
+
+	GtkWidget *OutmostWidget = GetOutmostWidgetHandle ( Widget );
+	if ( OutmostWidget != NULL )
+		{
+		g_signal_handlers_disconnect_matched ( OutmostWidget, G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, Widget );
+		gtk_widget_destroy ( OutmostWidget );
+		}
 	Widget->NativeHandle = NULL;
+	Widget->ScrollHandle = NULL;
 	Widget->NativeLayoutHandle = NULL;
 	}
 
@@ -47,13 +53,16 @@ void FinishedCreatingNewWidget ( cuiWidget *Widget )
 	if ( ( Widget == NULL ) || ( Widget->NativeHandle == NULL ) )
 		return;
 	GtkWidget *Container = GetContainer ( Widget );
-	gtk_widget_set_size_request ( GTK_WIDGET ( Widget->NativeHandle ), ( gint ) Widget->Width, ( gint ) Widget->Height );
+	GtkWidget *OutmostWidget = Widget->NativeHandle;
+	if ( Widget->ScrollHandle != NULL )
+		OutmostWidget = Widget->ScrollHandle;
+	gtk_widget_set_size_request ( OutmostWidget, ( gint ) Widget->Width, ( gint ) Widget->Height );
 	if ( Container != NULL )
-		gtk_fixed_put ( GTK_FIXED ( Container ), GTK_WIDGET ( Widget->NativeHandle ), Widget->X, Widget->Y );
+		gtk_fixed_put ( GTK_FIXED ( Container ), OutmostWidget, Widget->X, Widget->Y );
 	if ( Widget->Visible )
-		gtk_widget_show_all ( GTK_WIDGET ( Widget->NativeHandle ) );
+		gtk_widget_show_all ( OutmostWidget );
 	else
-		gtk_widget_hide ( GTK_WIDGET ( Widget->NativeHandle ) );
-	gtk_widget_set_sensitive ( GTK_WIDGET ( Widget->NativeHandle ), Widget->Enabled ? TRUE : FALSE );
+		gtk_widget_hide ( OutmostWidget );
+	gtk_widget_set_sensitive ( OutmostWidget, Widget->Enabled ? TRUE : FALSE );
 	LOG_DEBUG ( "Created widget %p (%s)", Widget, Stringify_cuiWidgetType ( Widget->Type ) );
 	}

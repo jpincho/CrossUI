@@ -1,6 +1,20 @@
 #include "GTK3BackendInternal.h"
 #include <string.h>
 
+GtkWidget *GetOutmostWidgetHandle ( const cuiWidget *Widget )
+	{
+	if ( Widget == NULL )
+		return NULL;
+	switch ( Widget->Type )
+		{
+		case cuiType_ListBox:
+		case cuiType_Tree:
+			return Widget->ScrollHandle;
+		default:
+			return Widget->NativeHandle;
+		}
+	}
+
 const char *cuiGetBackendName ( void )
 	{
 	return "GTK3";
@@ -55,6 +69,9 @@ void cuiSetWidgetText ( cuiWidget *Widget, const char *Text )
 			gtk_text_buffer_set_text ( Buffer, EMPTY_STRING_IF_NULL ( Text ), -1 );
 			break;
 			}
+		case cuiType_GroupBox:
+			gtk_frame_set_label ( GTK_FRAME ( Widget->NativeHandle ), EMPTY_STRING_IF_NULL ( Widget->Text ) );
+			break;
 
 		default:
 			break;
@@ -119,17 +136,20 @@ void cuiSetWidgetBounds ( cuiWidget *Widget, const int X, const int Y, const uns
 	Widget->X = X;
 	Widget->Y = Y;
 
-	gtk_widget_set_size_request ( GTK_WIDGET ( Widget->NativeHandle ), ( gint ) Width, ( gint ) Height );
 	if ( Widget->Type == cuiType_Window )
 		{
+		gtk_widget_set_size_request ( GTK_WIDGET ( Widget->NativeHandle ), ( gint ) Width, ( gint ) Height );
 		gtk_window_resize ( GTK_WINDOW ( Widget->NativeHandle ), ( gint ) Width, ( gint ) Height );
 		if ( ( Widget->X >= 0 ) && ( Widget->Y >= 0 ) )
 			gtk_window_move ( GTK_WINDOW ( Widget->NativeHandle ), X, Y );
 		}
-
-	if ( Widget->NativeLayoutHandle != NULL )
+	else
 		{
-		gtk_fixed_move ( GTK_FIXED ( Widget->NativeLayoutHandle ), GTK_WIDGET ( Widget->NativeHandle ), X, Y );
+		GtkWidget *OutmostWidget = GetOutmostWidgetHandle ( Widget );
+		GtkWidget *Container = GetContainer ( Widget );
+		gtk_widget_set_size_request ( OutmostWidget, ( gint ) Width, ( gint ) Height );
+		if ( Container != NULL )
+			gtk_fixed_move ( GTK_FIXED ( Container ), OutmostWidget, X, Y );
 		}
 	}
 
@@ -145,7 +165,7 @@ bool cuiGetWidgetBounds ( cuiWidget *Widget, int *X, int *Y, unsigned *Width, un
 		if ( Widget->Type == cuiType_Window )
 			gtk_window_get_size ( GTK_WINDOW ( Widget->NativeHandle ), &NativeWidth, &NativeHeight );
 		else
-			gtk_widget_get_size_request ( GTK_WIDGET ( Widget->NativeHandle ), &NativeWidth, &NativeHeight );
+			gtk_widget_get_size_request ( GetOutmostWidgetHandle ( Widget ), &NativeWidth, &NativeHeight );
 		if ( NativeWidth < 0 )
 			NativeWidth = 0;
 		if ( NativeHeight < 0 )
@@ -173,37 +193,45 @@ bool cuiGetWidgetBounds ( cuiWidget *Widget, int *X, int *Y, unsigned *Width, un
 	return true;
 	}
 
-void cuiSetVisible ( cuiWidget * Widget, const bool Visible )
+void cuiSetVisible ( cuiWidget *Widget, const bool Visible )
 	{
 	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;
-	gtk_widget_set_visible ( GTK_WIDGET ( Widget->NativeHandle ), Visible );
+	if ( Widget->ScrollHandle != NULL )
+		gtk_widget_set_visible ( GTK_WIDGET ( Widget->ScrollHandle ), Visible );
+	if ( Widget->NativeHandle != NULL )
+		gtk_widget_set_visible ( GTK_WIDGET ( Widget->NativeHandle ), Visible );
 	Widget->Visible = Visible;
 	}
 
-bool cuiIsVisible ( const cuiWidget * Widget )
+bool cuiIsVisible ( const cuiWidget *Widget )
 	{
 	if ( ( Widget == NULL ) || ( Widget->NativeHandle == NULL ) )
 		return false;
-	return gtk_widget_get_visible ( GTK_WIDGET ( Widget->NativeHandle ) );
+	GtkWidget *WidgetToConsider = GetOutmostWidgetHandle ( Widget );
+	return gtk_widget_get_visible ( WidgetToConsider );
 	}
 
-void cuiSetEnabled ( cuiWidget * Widget, const bool Enabled )
+void cuiSetEnabled ( cuiWidget *Widget, const bool Enabled )
 	{
 	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;
-	gtk_widget_set_sensitive ( GTK_WIDGET ( Widget->NativeHandle ), Enabled );
+	if ( Widget->ScrollHandle != NULL )
+		gtk_widget_set_sensitive ( GTK_WIDGET ( Widget->ScrollHandle ), Enabled );
+	if ( Widget->NativeHandle != NULL )
+		gtk_widget_set_sensitive ( GTK_WIDGET ( Widget->NativeHandle ), Enabled );
 	Widget->Enabled = Enabled;
 	}
 
-bool cuiIsEnabled ( const cuiWidget * Widget )
+bool cuiIsEnabled ( const cuiWidget *Widget )
 	{
 	if ( ( Widget == NULL ) || ( Widget->NativeHandle == NULL ) )
 		return false;
-	return gtk_widget_get_sensitive ( GTK_WIDGET ( Widget->NativeHandle ) );
+	GtkWidget *WidgetToConsider = GetOutmostWidgetHandle ( Widget );
+	return gtk_widget_get_sensitive ( WidgetToConsider );
 	}
 
-void cuiSetFocus ( const cuiWidget * Widget )
+void cuiSetFocus ( const cuiWidget *Widget )
 	{
 	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;

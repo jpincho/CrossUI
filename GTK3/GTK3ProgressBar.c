@@ -6,6 +6,8 @@ cuiWidget *cuiCreateProgressBar ( cuiWidget *ParentWidget, const int X, const in
 	if ( Widget == NULL )
 		return NULL;
 	Widget->NativeHandle = gtk_progress_bar_new ();
+	//gtk_widget_set_hexpand ( Widget->NativeHandle, FALSE );
+	//gtk_widget_set_halign ( Widget->NativeHandle, GTK_ALIGN_START );
 	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), 0.0 );
 	gtk_progress_bar_set_show_text ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), TRUE );
 	FinishedCreatingNewWidget ( Widget );
@@ -20,6 +22,7 @@ void cuiSetProgressBarValue ( cuiWidget *Widget, const float Value )
 		return;
 
 	char Label[16];
+
 	float FinalValue = CLAMP ( Value, 0.0f, 100.0f );
 
 	gtk_progress_bar_set_fraction ( GTK_PROGRESS_BAR ( Widget->NativeHandle ), FinalValue / 100.0 );

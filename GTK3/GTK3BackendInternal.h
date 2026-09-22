@@ -8,4 +8,5 @@
 #include <gtk/gtk.h>
 
 GtkWidget *GetContainer ( const cuiWidget *Widget );
+GtkWidget *GetOutmostWidgetHandle ( const cuiWidget *Widget );
 void FinishedCreatingNewWidget ( cuiWidget *Widget );

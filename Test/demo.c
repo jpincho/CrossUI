@@ -1,7 +1,9 @@
 #include <CrossUI.h>
 #include <stdio.h>
-#if 1
+
 cuiWidget *ProgressBarHandle;
+cuiWidget *ListBoxHandle;
+int NextListItem;
 
 void OnWindowResized ( const cuiWidget *Widget, const unsigned Width, const unsigned Height )
 	{
@@ -43,7 +45,9 @@ void OnSliderChanged ( const cuiWidget *Widget, const float Value )
 
 void OnComboSelectionChanged ( const cuiWidget *Widget, const int NewIndex )
 	{
-	printf ( "Combo changed - %d\n", NewIndex );
+	char Text[256];
+	cuiGetComboBoxItemText ( Widget, NewIndex, Text, sizeof ( Text ) );
+	printf ( "Combo changed - %d - '%s'\n", NewIndex, Text );
 	}
 
 void OnTextBoxContentChanged ( const cuiWidget *Widget )
@@ -62,7 +66,35 @@ void OnTextAreaContentChanged ( const cuiWidget *Widget )
 
 void OnListBoxSelectionChanged ( const cuiWidget *Widget, const int NewIndex )
 	{
-	printf ( "ListBox Index changed - %d\n", NewIndex );
+	char Text[256];
+	cuiGetListBoxItemText ( Widget, NewIndex, Text, sizeof ( Text ) );
+	printf ( "ListBox changed - %d - '%s'\n", NewIndex, Text );
+	}
+
+void OnTreeSelectionChanged ( const cuiWidget *Widget, const int NewIndex )
+	{
+	char Text[256];
+	cuiGetTreeItemText ( Widget, NewIndex, Text, sizeof ( Text ) );
+	printf ( "Tree changed - %d - '%s'\n", NewIndex, Text );
+	}
+
+void OnAddListItem ( const cuiWidget *Widget )
+	{
+	char Text[32];
+	( void ) Widget;
+	snprintf ( Text, sizeof ( Text ), "Added %d", NextListItem++ );
+	printf ( "Added list item at index %d\n", cuiAddItemToListBox ( ListBoxHandle, Text ) );
+	}
+
+void OnRemoveListItem ( const cuiWidget *Widget )
+	{
+	( void ) Widget;
+	int Index = cuiGetSelectedItemInListBox ( ListBoxHandle );
+	if ( Index >= 0 )
+		{
+		cuiRemoveItemFromListBox ( ListBoxHandle, Index );
+		printf ( "Removed list item at index %d\n", Index );
+		}
 	}
 
 int main ( int argc, char *argv[] )
@@ -88,29 +120,20 @@ int main ( int argc, char *argv[] )
 	Callbacks.Destroyed = &OnWindowDestroyed;
 	cuiSetWidgetCallbacks ( WindowHandle, Callbacks );
 
-	cuiWidget *GreetButton = cuiCreateButton ( WindowHandle, "Greet", 380, 56, 100, 32 );
-	Callbacks = cuiGetWidgetCallbacks ( GreetButton );
-	Callbacks.Clicked = &OnGreet;
-	cuiSetWidgetCallbacks ( GreetButton, Callbacks );
-
-	cuiWidget *ShutdownButton = cuiCreateButton ( WindowHandle, "Force Shutdown", 490, 56, 100, 32 );
-	Callbacks = cuiGetWidgetCallbacks ( ShutdownButton );
-	Callbacks.Clicked = &OnShutdown;
-	cuiSetWidgetCallbacks ( ShutdownButton, Callbacks );
-
-	cuiWidget *Slider = cuiCreateSlider ( WindowHandle, 0, 50, 100, 20, 0, 100, 46 );
+	cuiWidget *Slider = cuiCreateSlider ( WindowHandle, 0, 0, 100, 20, 0, 100, 46 );
 	Callbacks = cuiGetWidgetCallbacks ( Slider );
 	Callbacks.SliderChangedValue = OnSliderChanged;
 	cuiSetWidgetCallbacks ( Slider, Callbacks );
 
-	cuiWidget *CheckBox = cuiCreateCheckbox ( WindowHandle, "My check", 0, 100, 100, 20, true );
+	cuiWidget *CheckBox = cuiCreateCheckbox ( WindowHandle, "My check", 0, 50, 100, 20, true );
 	Callbacks = cuiGetWidgetCallbacks ( CheckBox );
 	Callbacks.CheckChanged = OnCheckChanged;
 	cuiSetWidgetCallbacks ( CheckBox, Callbacks );
 
-	ProgressBarHandle = cuiCreateProgressBar ( WindowHandle, 0, 150, 100, 20 );
+	ProgressBarHandle = cuiCreateProgressBar ( WindowHandle, 0, 100, 100, 20 );
+	cuiCreateLabel ( WindowHandle, "Label widget", 0, 130, 100, 20 );
 
-	cuiWidget *ComboBox = cuiCreateComboBox ( WindowHandle, 0, 200, 100, 20 );
+	cuiWidget *ComboBox = cuiCreateComboBox ( WindowHandle, 0, 150, 100, 20 );
 	cuiAddItemToComboBox ( ComboBox, "GLSL" );
 	cuiAddItemToComboBox ( ComboBox, "HLSL" );
 	cuiAddItemToComboBox ( ComboBox, "Metal" );
@@ -119,23 +142,55 @@ int main ( int argc, char *argv[] )
 	Callbacks.ComboBoxChanged = OnComboSelectionChanged;
 	cuiSetWidgetCallbacks ( ComboBox, Callbacks );
 
-	cuiWidget *TextArea = cuiCreateTextArea ( WindowHandle, "This is a text area", 0, 250, 100, 100 );
+	cuiWidget *GreetButton = cuiCreateButton ( WindowHandle, "Greet", 0, 200, 100, 32 );
+	Callbacks = cuiGetWidgetCallbacks ( GreetButton );
+	Callbacks.Clicked = &OnGreet;
+	cuiSetWidgetCallbacks ( GreetButton, Callbacks );
+
+	cuiWidget *ShutdownButton = cuiCreateButton ( WindowHandle, "Shutdown", 0, 250, 100, 32 );
+	Callbacks = cuiGetWidgetCallbacks ( ShutdownButton );
+	Callbacks.Clicked = &OnShutdown;
+	cuiSetWidgetCallbacks ( ShutdownButton, Callbacks );
+
+	cuiWidget *GroupBox = cuiCreateGroupBox ( WindowHandle, "TextStuff", 280, 0, 120, 220 );
+
+	cuiWidget *TextArea = cuiCreateTextArea ( GroupBox, "This is a text area", 10, 10, 100, 100 );
 	Callbacks = cuiGetWidgetCallbacks ( TextArea );
 	Callbacks.TextAreaChanged = OnTextAreaContentChanged;
 	cuiSetWidgetCallbacks ( TextArea, Callbacks );
 
-	cuiWidget *TextBox = cuiCreateTextBox ( WindowHandle, "This is a text box", 0, 350, 100, 100 );
+	cuiWidget *TextBox = cuiCreateTextBox ( GroupBox, "This is a text box", 10, 129, 100, 100 );
 	Callbacks = cuiGetWidgetCallbacks ( TextBox );
 	Callbacks.TextBoxChanged = OnTextBoxContentChanged;
 	cuiSetWidgetCallbacks ( TextBox, Callbacks );
 
-	cuiWidget *ListBox = cuiCreateListBox ( WindowHandle, 120, 0, 100, 100 );
-	Callbacks = cuiGetWidgetCallbacks ( ListBox );
+	ListBoxHandle = cuiCreateListBox ( WindowHandle, 120, 0, 100, 100 );
+	Callbacks = cuiGetWidgetCallbacks ( ListBoxHandle );
 	Callbacks.ListBoxSelectionChanged = OnListBoxSelectionChanged;
-	cuiAddItemToListBox ( ListBox, "Item1" );
-	cuiAddItemToListBox ( ListBox, "Item2" );
-	cuiAddItemToListBox ( ListBox, "Item3" );
-	cuiSetWidgetCallbacks ( ListBox, Callbacks );
+	cuiAddItemToListBox ( ListBoxHandle, "Item1" );
+	cuiAddItemToListBox ( ListBoxHandle, "Item2" );
+	cuiAddItemToListBox ( ListBoxHandle, "Item3" );
+	cuiSetSelectedItemInListBox ( ListBoxHandle, 0 );
+	cuiSetWidgetCallbacks ( ListBoxHandle, Callbacks );
+
+	cuiWidget *AddItemButton = cuiCreateButton ( WindowHandle, "Add item", 120, 110, 100, 28 );
+	Callbacks = cuiGetWidgetCallbacks ( AddItemButton );
+	Callbacks.Clicked = OnAddListItem;
+	cuiSetWidgetCallbacks ( AddItemButton, Callbacks );
+
+	cuiWidget *RemoveItemButton = cuiCreateButton ( WindowHandle, "Remove", 120, 145, 100, 28 );
+	Callbacks = cuiGetWidgetCallbacks ( RemoveItemButton );
+	Callbacks.Clicked = OnRemoveListItem;
+	cuiSetWidgetCallbacks ( RemoveItemButton, Callbacks );
+
+	cuiWidget *Tree = cuiCreateTree ( WindowHandle, 120, 190, 180, 220 );
+	Callbacks = cuiGetWidgetCallbacks ( Tree );
+	Callbacks.TreeSelectionChanged = OnTreeSelectionChanged;
+	cuiTreeItem Root = cuiAddItemToTree ( Tree, cuiTreeItem_Root, "Root" );
+	cuiAddItemToTree ( Tree, Root, "Child 1" );
+	cuiAddItemToTree ( Tree, Root, "Child 2" );
+	cuiAddItemToTree ( Tree, cuiTreeItem_Root, "Another root" );
+	cuiSetWidgetCallbacks ( Tree, Callbacks );
 
 	while ( cuiUpdate ( true ) == true )
 		{}
@@ -143,164 +198,3 @@ int main ( int argc, char *argv[] )
 
 	return 0;
 	}
-
-
-
-
-#else
-#include "CrossUI.h"
-#include <Platform/Platform.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-static cuiWidget *NameBox;
-static cuiWidget *LanguageCombo;
-static cuiWidget *ShaderList;
-static cuiWidget *ShaderTree;
-static cuiWidget *QualitySlider;
-static cuiWidget *Progress;
-static cuiWidget *NotesArea;
-static cuiWidget *DebugCheck;
-
-static void OnLanguageChanged ( cuiWidget * Widget, void *UserData )
-	{
-	UNUSED ( UserData );
-	char Status[128];
-	int Index = cuiGetSelectedItemInCombo ( Widget );
-	snprintf ( Status, sizeof ( Status ), "Language index: %d", Index );
-	cuiSetProgressBarValue ( Progress, ( Index + 1 ) * 25 );
-	cuiSetWidgetText ( cuiGetParent ( Widget ), Status );
-	}
-
-static void OnQualityChanged ( cuiWidget * Widget, void *UserData )
-	{
-	UNUSED ( UserData );
-	cuiSetProgressBarValue ( Progress, cuiGetSliderValue ( Widget ) );
-	}
-
-static void OnTreeChanged ( cuiWidget * Widget, void *UserData )
-	{
-	UNUSED ( UserData );
-	char Text[128];
-	cuiTreeItem Selected = cuiTreeGetSelected ( Widget );
-
-	cuiTreeGetItemText ( Widget, Selected, Text, sizeof ( Text ) );
-	if ( Text[0] != 0 )
-		cuiSetWidgetText ( NameBox, Text );
-	}
-
-static void OnGreet ( cuiWidget * Widget, void *UserData )
-	{
-	UNUSED ( Widget );
-	char Name[128];
-	char Notes[512];
-	char Message[768];
-	cuiWidget * Window = ( cuiWidget * ) UserData;
-	cuiGetWidgetText ( NameBox, Name, sizeof ( Name ) );
-	cuiGetWidgetText ( NotesArea, Notes, sizeof ( Notes ) );
-	snprintf ( Message, sizeof ( Message ), "Hello %s\nDebug: %s\n%s",
-	           ( Name[0] != 0 ) ? Name : "there",
-	           cuiGetCheckboxState ( DebugCheck ) ? "on" : "off",
-	           Notes );
-	cuiMessageBox ( Window, "Greeting", Message, cuiMessage_Info );
-	}
-
-static void OnOpenFile ( cuiWidget * Widget, void *UserData )
-	{
-	UNUSED ( Widget );
-	cuiWidget * Window = ( cuiWidget * ) UserData;
-	char *Path = cuiOpenFileDialog ( Window, "Open shader", "Shader Files (*.glsl;*.frag;*.vert)|*.glsl;*.frag;*.vert|All Files (*.*)|*.*" );
-	if ( Path != NULL )
-		{
-		cuiSetWidgetText ( NameBox, Path );
-		cuiMessageBox ( Window, "Opened", Path, cuiMessage_Info );
-		free ( Path );
-		}
-	}
-
-static void OnQuit ( cuiWidget * Widget, void *UserData )
-	{
-	UNUSED ( Widget );
-	cuiDestroyWidget ( ( cuiWidget * ) UserData );
-	}
-
-int main ( void )
-	{
-	cuiWidget *Window;
-	cuiWidget *GraphGroup;
-	cuiWidget *GreetButton;
-	cuiWidget *OpenButton;
-	cuiWidget *QuitButton;
-	cuiTreeItem Shaders;
-	cuiTreeItem Passes;
-	cuiTreeItem Vertex;
-	cuiTreeItem Fragment;
-
-	if ( cuiInitialize () == false )
-		{
-		fprintf ( stderr, "Failed to initialize CrossUI\n" );
-		return 1;
-		}
-
-	printf ( "CrossUI backend: %s\n", cuiGetBackendName () );
-
-	Window = cuiCreateWindow ( "CrossUI Demo", 80, 60, 820, 560 );
-	if ( Window == cuiWidget_Invalid )
-		{
-		fprintf ( stderr, "Failed to create window\n" );
-		cuiShutdown ();
-		return 1;
-		}
-
-	cuiCreateLabel ( Window, "Name", 20, 20, 80, 24 );
-	NameBox = cuiCreateTextBox ( Window, "New Shader", 110, 18, 250, 28 );
-	DebugCheck = cuiCreateCheckBox ( Window, "Debug output", 380, 20, 160, 24 );
-
-	cuiCreateLabel ( Window, "Language", 20, 60, 80, 24 );
-	LanguageCombo = cuiCreateComboBox ( Window, 110, 58, 250, 28 );
-	cuiComboAddItem ( LanguageCombo, "GLSL" );
-	cuiComboAddItem ( LanguageCombo, "HLSL" );
-	cuiComboAddItem ( LanguageCombo, "Metal" );
-	cuiComboSetSelected ( LanguageCombo, 0 );
-	cuiSetChangeCallback ( LanguageCombo, OnLanguageChanged, NULL );
-
-	GreetButton = cuiCreateButton ( Window, "Greet", 380, 56, 100, 32 );
-	cuiSetClickCallback ( GreetButton, OnGreet, Window );
-	OpenButton = cuiCreateButton ( Window, "Open...", 490, 56, 100, 32 );
-	cuiSetClickCallback ( OpenButton, OnOpenFile, Window );
-	QuitButton = cuiCreateButton ( Window, "Quit", 600, 56, 100, 32 );
-	cuiSetClickCallback ( QuitButton, OnQuit, Window );
-
-	GraphGroup = cuiCreateGroupBox ( Window, "Graph", 20, 100, 360, 250 );
-	cuiCreateLabel ( GraphGroup, "Passes", 12, 24, 80, 20 );
-	ShaderList = cuiCreateListBox ( GraphGroup, 12, 48, 150, 180 );
-	cuiListAddItem ( ShaderList, "Forward" );
-	cuiListAddItem ( ShaderList, "Deferred" );
-	cuiListAddItem ( ShaderList, "Shadow" );
-	cuiListSetSelected ( ShaderList, 0 );
-
-	ShaderTree = cuiCreateTree ( GraphGroup, 180, 48, 160, 180 );
-	Shaders = cuiTreeAddItem ( ShaderTree, cuiTreeItem_Root, "Shaders" );
-	Passes = cuiTreeAddItem ( ShaderTree, Shaders, "Passes" );
-	Vertex = cuiTreeAddItem ( ShaderTree, Passes, "Vertex" );
-	Fragment = cuiTreeAddItem ( ShaderTree, Passes, "Fragment" );
-	cuiTreeAddItem ( ShaderTree, Vertex, "Transform" );
-	cuiTreeAddItem ( ShaderTree, Fragment, "Lighting" );
-	cuiTreeExpand ( ShaderTree, Shaders, true );
-	cuiTreeExpand ( ShaderTree, Passes, true );
-	cuiSetChangeCallback ( ShaderTree, OnTreeChanged, NULL );
-
-	cuiCreateLabel ( Window, "Quality", 400, 110, 80, 24 );
-	QualitySlider = cuiCreateSlider ( Window, 0, 100, 40, 400, 140, 390, 32 );
-	cuiSetChangeCallback ( QualitySlider, OnQualityChanged, NULL );
-	Progress = cuiCreateProgressBar ( Window, 400, 180, 390, 24 );
-	cuiProgressSetValue ( Progress, 40 );
-
-	cuiCreateLabel ( Window, "Notes", 400, 220, 80, 24 );
-	NotesArea = cuiCreateTextArea ( Window, "Build a shader graph with CrossUI widgets.", 400, 248, 390, 100 );
-
-	cuiRun ();
-	cuiShutdown ();
-	return 0;
-	}
-#endif

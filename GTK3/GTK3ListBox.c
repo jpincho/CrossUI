@@ -1,13 +1,8 @@
 #include "GTK3BackendInternal.h"
 
-static GtkWidget *GetListView ( const cuiWidget *Widget )
-	{
-	return gtk_bin_get_child ( GTK_BIN ( Widget->NativeHandle ) );
-	}
-
 static GtkListStore *GetListStore ( const cuiWidget *Widget )
 	{
-	return GTK_LIST_STORE ( gtk_tree_view_get_model ( GTK_TREE_VIEW ( GetListView ( Widget ) ) ) );
+	return GTK_LIST_STORE ( gtk_tree_view_get_model ( GTK_TREE_VIEW ( Widget->NativeHandle ) ) );
 	}
 
 static void OnListSelectionChanged ( GtkTreeSelection *Selection, gpointer Data )
@@ -53,7 +48,8 @@ cuiWidget *cuiCreateListBox ( cuiWidget *ParentWidget, const int X, const int Y,
 	gtk_scrolled_window_set_shadow_type ( GTK_SCROLLED_WINDOW ( Scroll ), GTK_SHADOW_IN );
 	gtk_container_add ( GTK_CONTAINER ( Scroll ), View );
 
-	Widget->NativeHandle = Scroll;
+	Widget->ScrollHandle = Scroll;
+	Widget->NativeHandle = View;
 
 	FinishedCreatingNewWidget ( Widget );
 	return Widget;
@@ -104,7 +100,7 @@ void cuiSetSelectedItemInListBox ( const cuiWidget *Widget, const int Index )
 	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;
 
-	GtkTreeSelection *Selection = gtk_tree_view_get_selection ( GTK_TREE_VIEW ( GetListView ( Widget ) ) );
+	GtkTreeSelection *Selection = gtk_tree_view_get_selection ( GTK_TREE_VIEW ( Widget->NativeHandle ) );
 	gtk_tree_selection_unselect_all ( Selection );
 	if ( Index >= 0 )
 		{
@@ -125,7 +121,7 @@ int cuiGetSelectedItemInListBox ( const cuiWidget *Widget )
 	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return -1;
 
-	GtkTreeSelection *Selection = gtk_tree_view_get_selection ( GTK_TREE_VIEW ( GetListView ( Widget ) ) );
+	GtkTreeSelection *Selection = gtk_tree_view_get_selection ( GTK_TREE_VIEW ( Widget->NativeHandle ) );
 	GtkTreeModel *Model = NULL;
 	GtkTreeIter Iter;
 	if ( gtk_tree_selection_get_selected ( Selection, &Model, &Iter ) == FALSE )
@@ -146,4 +142,28 @@ int cuiGetEntryCountInListBox ( const cuiWidget *Widget )
 
 	GtkListStore *ListStore = GetListStore ( Widget );
 	return gtk_tree_model_iter_n_children ( GTK_TREE_MODEL ( ListStore ), NULL );
+	}
+
+void cuiGetListBoxItemText ( const cuiWidget *Widget, const int Index, char *Buffer, const unsigned BufferSize )
+	{
+	GtkListStore *ListStore;
+	GtkTreeIter Iter;
+	char *Text = NULL;
+	if ( ( Buffer == NULL ) || ( BufferSize == 0 ) )
+		return;
+	Buffer[0] = 0;
+	ASSERT_FAIL ( Widget != NULL );
+	ASSERT_FAIL ( Widget->Type == cuiType_ListBox );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) || ( Index < 0 ) )
+		return;
+	ListStore = GetListStore ( Widget );
+	if ( ( ListStore == NULL ) || ( gtk_tree_model_iter_nth_child ( GTK_TREE_MODEL ( ListStore ), &Iter, NULL, Index ) == FALSE ) )
+		return;
+	gtk_tree_model_get ( GTK_TREE_MODEL ( ListStore ), &Iter, 0, &Text, -1 );
+	if ( Text != NULL )
+		{
+		strncpy ( Buffer, Text, BufferSize - 1 );
+		Buffer[BufferSize - 1] = 0;
+		g_free ( Text );
+		}
 	}

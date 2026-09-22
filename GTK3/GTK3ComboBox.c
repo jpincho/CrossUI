@@ -89,3 +89,27 @@ int cuiGetEntryCountInComboBox ( const cuiWidget *Widget )
 	GtkTreeModel *Model = gtk_combo_box_get_model ( GTK_COMBO_BOX ( Widget->NativeHandle ) );
 	return gtk_tree_model_iter_n_children ( Model, NULL );
 	}
+
+void cuiGetComboBoxItemText ( const cuiWidget *Widget, const int Index, char *Buffer, const unsigned BufferSize )
+	{
+	GtkTreeModel *Model;
+	GtkTreeIter Iter;
+	char *Text = NULL;
+	if ( ( Buffer == NULL ) || ( BufferSize == 0 ) )
+		return;
+	Buffer[0] = 0;
+	ASSERT_FAIL ( Widget != NULL );
+	ASSERT_FAIL ( Widget->Type == cuiType_ComboBox );
+	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) || ( Index < 0 ) )
+		return;
+	Model = gtk_combo_box_get_model ( GTK_COMBO_BOX ( Widget->NativeHandle ) );
+	if ( ( Model == NULL ) || ( gtk_tree_model_iter_nth_child ( Model, &Iter, NULL, Index ) == FALSE ) )
+		return;
+	gtk_tree_model_get ( Model, &Iter, 0, &Text, -1 );
+	if ( Text != NULL )
+		{
+		strncpy ( Buffer, Text, BufferSize - 1 );
+		Buffer[BufferSize - 1] = 0;
+		g_free ( Text );
+		}
+	}

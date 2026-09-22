@@ -156,6 +156,8 @@ const char *Stringify_cuiWidgetType ( const cuiWidgetType Value )
 			STRINGIFY ( TextArea );
 			STRINGIFY ( TextBox );
 			STRINGIFY ( ListBox );
+			STRINGIFY ( GroupBox );
+			STRINGIFY ( Tree );
 #undef STRINGIFY
 		}
 	return "Unknown widget type";
