@@ -4,9 +4,17 @@
 
 bool cuiInitialize ( void )
 	{
+	int argc = 1;
+	char arg0[] = "CrossUI";
+	char *argv[] = { arg0, NULL };
+	return cuiInitializeWithArgs ( argc, argv );
+	}
+
+bool cuiInitializeWithArgs ( int argc, char *argv[] )
+	{
 	if ( Initialized )
 		return true;
-	if ( cuiBackend_Initialize () == false )
+	if ( cuiBackend_Initialize ( argc, argv ) == false )
 		return false;
 	Initialized = true;
 	return true;

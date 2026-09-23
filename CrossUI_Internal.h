@@ -42,7 +42,7 @@ typedef struct cuiWidget
 
 extern bool Initialized;
 
-bool cuiBackend_Initialize ( void );
+bool cuiBackend_Initialize ( int argc, char *argv[] );
 void cuiBackend_Shutdown ( void );
 
 cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height );

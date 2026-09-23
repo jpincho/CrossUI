@@ -13,13 +13,9 @@ GtkWidget *GetContainer ( const cuiWidget *Widget )
 	return NULL;
 	}
 
-bool cuiBackend_Initialize ( void )
+bool cuiBackend_Initialize ( int argc, char *argv[] )
 	{
-	int Argc = 1;
-	char Arg0[] = "CrossUI";
-	char *Argv[] = { Arg0, NULL };
-	char **ArgvPtr = Argv;
-	return gtk_init_check ( &Argc, &ArgvPtr );
+	return gtk_init_check ( ( int* ) &argc, ( char *** ) &argv );
 	}
 
 void cuiBackend_Shutdown ( void )

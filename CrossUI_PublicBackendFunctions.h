@@ -121,3 +121,23 @@ void *cuiGetTreeItemData ( cuiWidget *Widget, cuiTreeItem Item );
 /*
 GUIHandle cuiCreatePanel ( const GUIHandle Parent, const int X, const int Y, const unsigned Width, const unsigned Height );
 */
+
+typedef enum
+	{
+	cuiMessage_Info = 0,
+	cuiMessage_Warning,
+	cuiMessage_Error,
+	cuiMessage_Question
+	} cuiMessageType;
+
+typedef enum
+	{
+	cuiResult_None = 0,
+	cuiResult_OK,
+	cuiResult_Cancel,
+	cuiResult_Yes,
+	cuiResult_No
+	} cuiResult;
+
+cuiResult cuiMessageBox ( const cuiWidget *Parent, const char *Title, const char *Message, const cuiMessageType Type );
+char *cuiFileDialog ( cuiWidget *Parent, const char *Title, const char *Filter, const bool Save, const bool Folder );
