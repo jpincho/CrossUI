@@ -7,6 +7,9 @@ GtkWidget *GetOutmostWidgetHandle ( const cuiWidget *Widget )
 		return NULL;
 	switch ( Widget->Type )
 		{
+		case cuiType_ListBox:
+		case cuiType_Tree:
+			return Widget->ScrollHandle;
 		default:
 			return Widget->NativeHandle;
 		}

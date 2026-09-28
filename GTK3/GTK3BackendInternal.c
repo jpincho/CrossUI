@@ -29,6 +29,9 @@ void cuiBackend_DestroyNativeWidget ( cuiWidget *Widget )
 		return;
 
 	LOG_DEBUG ( "Destroying widget %p (%s)", Widget, Stringify_cuiWidgetType ( Widget->Type ) );
+	if ( Widget->Type == cuiType_Tree )
+		cuiClearTreeItems ( Widget );
+
 	GtkWidget *OutmostWidget = GetOutmostWidgetHandle ( Widget );
 	if ( OutmostWidget != NULL )
 		{
