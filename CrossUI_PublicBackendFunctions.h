@@ -98,3 +98,5 @@ typedef enum
 
 cuiResult cuiMessageBox ( const cuiWidget *Parent, const char *Title, const char *Message, const cuiMessageType Type );
 char *cuiFileDialog ( cuiWidget *Parent, const char *Title, const char *Filter, const bool Save, const bool Folder );
+
+char *cuiOpenFileDialog ( cuiWidget *Parent, const char *Title, const char *Filter );// Filter example :"All valid|*.gltf;*.gltb;|GLTF|*.gltf;|GLTF Binary|*.glb"

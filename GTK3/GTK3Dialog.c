@@ -110,3 +110,33 @@ char *cuiFileDialog ( cuiWidget *Parent, const char *Title, const char *Filter, 
 	gtk_widget_destroy ( Dialog );
 	return Result;
 	}
+
+char *cuiOpenFileDialog ( cuiWidget *Parent, const char *Title, const char *Filter )
+	{
+	GtkWindow *ParentWindow = NULL;
+	GtkFileChooserAction Action = GTK_FILE_CHOOSER_ACTION_OPEN;
+	GtkWidget *Dialog;
+	char *Result = NULL;
+
+	if ( ( Parent != NULL ) && ( Parent->Type == cuiType_Window ) )
+		ParentWindow = GTK_WINDOW ( Parent->NativeHandle );
+
+	Dialog = gtk_file_chooser_dialog_new ( EMPTY_STRING_IF_NULL ( Title ), ParentWindow, Action,
+	                                       "_Cancel", GTK_RESPONSE_CANCEL,
+	                                       "_Open", GTK_RESPONSE_ACCEPT,
+	                                       NULL );
+	ApplyFileFilters ( GTK_FILE_CHOOSER ( Dialog ), Filter );
+	if ( gtk_dialog_run ( GTK_DIALOG ( Dialog ) ) == GTK_RESPONSE_ACCEPT )
+		{
+		char *Filename = gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER ( Dialog ) );
+		Result = strdup ( Filename );
+		g_free ( Filename );
+		}
+	gtk_widget_destroy ( Dialog );
+
+	// Since this dialog doesn't count as a widget, it's possible that cuiUpdate does nothing, so I need to update gtk here.
+	while ( gtk_events_pending () )
+		gtk_main_iteration_do ( FALSE );
+
+	return Result;
+	}
