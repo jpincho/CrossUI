@@ -3,6 +3,7 @@
 #include <Platform/Platform.h>
 #include <Platform/ArrayUtils.h>
 #include <Platform/Logger.h>
+#include <Platform/PointerList.h>
 
 #if defined (PLATFORM_COMPILER_GNU)
 #include <stdlib.h>
@@ -10,18 +11,13 @@
 #endif
 
 bool Initialized = false;
+PointerList WidgetList = {0};
 
-static struct
-	{
-	cuiWidget *First, *Last;
-	unsigned Count;
-	} WidgetList = {0};
-
-static void cuiInternal_AddChildToParent ( cuiWidget *Parent, cuiWidget *Child )
+static bool cuiInternal_AddChildToParent ( cuiWidget *Parent, cuiWidget *Child )
 	{
 	if ( Parent == NULL )
-		return;
-	ARRAY_PUSH_BACK ( Parent->Children, Parent->ChildCount, Parent->ChildCapacity, Child );
+		return true;
+	return PointerArray_AddAtEnd ( &Parent->Children, Child );
 	}
 
 static void cuiInternal_RemoveChildFromParent ( cuiWidget *Parent, cuiWidget *Child )
@@ -29,28 +25,17 @@ static void cuiInternal_RemoveChildFromParent ( cuiWidget *Parent, cuiWidget *Ch
 	if ( Parent == NULL )
 		return;
 
-	for ( unsigned Iterator = 0; Iterator < Parent->ChildCount; ++Iterator )
-		{
-		if ( Parent->Children[Iterator] == Child )
-			{
-			ARRAY_DELETE_AND_SHIFT ( Parent->Children, Parent->ChildCount, Iterator );
-			return;
-			}
-		}
+	long Index = PointerArray_Find ( &Parent->Children, Child );
+	if ( Index != -1 )
+		PointerArray_RemoveAndShift ( &Parent->Children, ( unsigned long ) Index );
 	}
 
-static void cuiInternal_AddWidgetToList ( cuiWidget *Widget )
+static bool cuiInternal_AddWidgetToList ( cuiWidget *Widget )
 	{
 	if ( Widget == NULL )
-		return;
-	Widget->Previous = WidgetList.Last;
-	Widget->Next = NULL;
-	if ( WidgetList.Last != NULL )
-		WidgetList.Last->Next = Widget;
-	else
-		WidgetList.First = Widget;
-	WidgetList.Last = Widget;
-	++WidgetList.Count;
+		return false;
+
+	return PointerList_AddAtEnd ( &WidgetList, Widget ) != NULL;
 	}
 
 static void cuiInternal_RemoveWidgetFromList ( cuiWidget *Widget )
@@ -58,16 +43,9 @@ static void cuiInternal_RemoveWidgetFromList ( cuiWidget *Widget )
 	if ( Widget == NULL )
 		return;
 
-	if ( WidgetList.First == Widget )
-		WidgetList.First = Widget->Next;
-	if ( WidgetList.Last == Widget )
-		WidgetList.Last = Widget->Previous;
-
-	if ( Widget->Next != NULL )
-		Widget->Next->Previous = Widget->Previous;
-	if ( Widget->Previous != NULL )
-		Widget->Previous->Next = Widget->Next;
-	--WidgetList.Count;
+	PointerListNode *Node = PointerList_Find ( &WidgetList, NULL, Widget );
+	if ( Node != NULL )
+		PointerList_DestroyNode ( &WidgetList, Node );
 	}
 
 cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *ParentWidget, const char *Text, const int X, const int Y, const unsigned Width, const unsigned Height )
@@ -97,9 +75,22 @@ cuiWidget *cuiInternal_CreateWidgetEntry ( cuiWidgetType Type, cuiWidget *Parent
 	NewWidget->Parent = ParentWidget;
 	NewWidget->Visible = true;
 	NewWidget->Enabled = true;
-	cuiInternal_AddChildToParent ( ParentWidget, NewWidget );
-
-	cuiInternal_AddWidgetToList ( NewWidget );
+	PointerArray_Initialize ( &NewWidget->Children );
+	if ( cuiInternal_AddChildToParent ( ParentWidget, NewWidget ) == false )
+		{
+		PointerArray_Destroy ( &NewWidget->Children );
+		SAFE_DEL_C ( NewWidget->Text );
+		free ( NewWidget );
+		return NULL;
+		}
+	if ( cuiInternal_AddWidgetToList ( NewWidget ) == false )
+		{
+		cuiInternal_RemoveChildFromParent ( ParentWidget, NewWidget );
+		PointerArray_Destroy ( &NewWidget->Children );
+		SAFE_DEL_C ( NewWidget->Text );
+		free ( NewWidget );
+		return NULL;
+		}
 	return NewWidget;
 	}
 
@@ -114,14 +105,16 @@ void cuiInternal_DestroyWidgetEntry ( cuiWidget *Widget )
 		Widget->Callbacks.Destroyed ( Widget );
 		}
 
-	while ( Widget->ChildCount > 0 )
-		cuiInternal_DestroyWidgetEntry ( Widget->Children[Widget->ChildCount - 1] );
+	for ( unsigned long Index = PointerArray_GetSize ( &Widget->Children ); Index > 0; --Index )
+		{
+		cuiInternal_DestroyWidgetEntry ( ( cuiWidget * ) PointerArray_Get ( &Widget->Children, Index - 1 ) );
+		}
+	PointerArray_Destroy ( &Widget->Children );
 
 	cuiInternal_RemoveChildFromParent ( Widget->Parent, Widget );
 	cuiInternal_RemoveWidgetFromList ( Widget );
 	cuiBackend_DestroyNativeWidget ( Widget );
 	//FreeItems ( Widget );
-	SAFE_DEL_C ( Widget->Children );
 	SAFE_DEL_C ( Widget->Text );
 	Widget->Type = cuiType_Dead;
 	free ( Widget );
@@ -129,15 +122,16 @@ void cuiInternal_DestroyWidgetEntry ( cuiWidget *Widget )
 
 void cuiInternal_DestroyAllWidgets ( void )
 	{
-	while ( WidgetList.Count > 0 )
+	while ( PointerList_IsEmpty ( &WidgetList ) == false )
 		{
-		cuiInternal_DestroyWidgetEntry ( WidgetList.First );
+		cuiWidget *Widget = ( cuiWidget * ) PointerList_GetNodeData ( PointerList_GetFirst ( &WidgetList ) );
+		cuiInternal_DestroyWidgetEntry ( Widget );
 		}
 	}
 
 unsigned cuiInternal_GetWidgetCount ( void )
 	{
-	return WidgetList.Count;
+	return PointerList_GetSize ( &WidgetList );
 	}
 
 const char *Stringify_cuiWidgetType ( const cuiWidgetType Value )

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include "CrossUI.h"
+#include <Platform/PointerArray.h>
 
 typedef struct cuiWidget
 	{
@@ -19,9 +20,7 @@ typedef struct cuiWidget
 	void *TextAreaBufferView;
 	void *ScrollHandle;
 	cuiWidget *Parent;
-	cuiWidget **Children;
-	unsigned ChildCount;
-	unsigned ChildCapacity;
+	PointerArray Children;
 
 	cuiWidgetCallbacks Callbacks;
 
@@ -37,7 +36,6 @@ typedef struct cuiWidget
 	cuiCallback OnChange;
 	void *OnChangeUserData;
 	void *OnCloseUserData;*/
-	cuiWidget *Previous, *Next;
 	} cuiWidget;
 
 extern bool Initialized;

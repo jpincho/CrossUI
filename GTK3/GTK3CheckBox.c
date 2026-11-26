@@ -25,18 +25,14 @@ cuiWidget *cuiCreateCheckbox ( cuiWidget *ParentWidget, const char *Text, const 
 
 void cuiSetCheckboxState ( cuiWidget *Widget, const bool State )
 	{
-	ASSERT_FAIL ( Widget != NULL );
-	ASSERT_FAIL ( Widget->Type == cuiType_CheckBox );
-	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+	if ( ( Widget == NULL ) || ( Widget->Type != cuiType_CheckBox ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;
 	gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON ( Widget->NativeHandle  ), State ? TRUE : FALSE );
 	}
 
 bool cuiGetCheckboxState ( const cuiWidget *Widget )
 	{
-	ASSERT_FAIL ( Widget != NULL );
-	ASSERT_FAIL ( Widget->Type == cuiType_CheckBox );
-	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+	if ( ( Widget == NULL ) || ( Widget->Type != cuiType_CheckBox ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return false;
 	return gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON ( Widget->NativeHandle ) ) ? true : false;
 	}

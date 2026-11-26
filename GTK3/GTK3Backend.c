@@ -58,12 +58,12 @@ void cuiSetWidgetText ( cuiWidget *Widget, const char *Text )
 			gtk_label_set_label ( GTK_LABEL ( Widget->NativeHandle ), EMPTY_STRING_IF_NULL ( Widget->Text ) );
 			break;
 		case cuiType_TextBox:
-			gtk_entry_set_text ( GTK_ENTRY ( Widget->NativeHandle ), EMPTY_STRING_IF_NULL ( Text ) );
+			gtk_entry_set_text ( GTK_ENTRY ( Widget->NativeHandle ), EMPTY_STRING_IF_NULL ( Widget->Text ) );
 			break;
 		case cuiType_TextArea:
 			{
 			GtkTextBuffer *Buffer = gtk_text_view_get_buffer ( GTK_TEXT_VIEW ( Widget->TextAreaBufferView ) );
-			gtk_text_buffer_set_text ( Buffer, EMPTY_STRING_IF_NULL ( Text ), -1 );
+			gtk_text_buffer_set_text ( Buffer, EMPTY_STRING_IF_NULL ( Widget->Text ), -1 );
 			break;
 			}
 		case cuiType_GroupBox:
@@ -176,12 +176,14 @@ bool cuiGetWidgetBounds ( cuiWidget *Widget, int *X, int *Y, unsigned *Width, un
 		}
 	if ( ( X != NULL ) || ( Y != NULL ) )
 		{
-		gint NativeX = 0;
-		gint NativeY = 0;
 		if ( Widget->Type == cuiType_Window )
+			{
+			gint NativeX = 0;
+			gint NativeY = 0;
 			gtk_window_get_position ( GTK_WINDOW ( Widget->NativeHandle ), &NativeX, &NativeY );
-		Widget->X = NativeX;
-		Widget->Y = NativeY;
+			Widget->X = NativeX;
+			Widget->Y = NativeY;
+			}
 		if ( X != NULL )
 			*X = Widget->X;
 		if ( Y != NULL )

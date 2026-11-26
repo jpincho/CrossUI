@@ -19,7 +19,7 @@ cuiWidget *cuiCreateTextArea ( cuiWidget *ParentWidget, const char *Text, const 
 	GtkWidget *View = gtk_text_view_new ();
 	GtkTextBuffer *Buffer = gtk_text_view_get_buffer ( GTK_TEXT_VIEW ( View ) );
 	gtk_text_view_set_wrap_mode ( GTK_TEXT_VIEW ( View ), GTK_WRAP_WORD_CHAR );
-	gtk_text_buffer_set_text ( Buffer, Widget->Text, -1 );
+	gtk_text_buffer_set_text ( Buffer, EMPTY_STRING_IF_NULL ( Widget->Text ), -1 );
 	g_signal_connect ( Buffer, "changed", G_CALLBACK ( OnBufferChanged ), Widget );
 
 	GtkWidget *Scroll = gtk_scrolled_window_new ( NULL, NULL );

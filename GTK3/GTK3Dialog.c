@@ -104,8 +104,11 @@ char *cuiFileDialog ( cuiWidget *Parent, const char *Title, const char *Filter, 
 	if ( gtk_dialog_run ( GTK_DIALOG ( Dialog ) ) == GTK_RESPONSE_ACCEPT )
 		{
 		char *Filename = gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER ( Dialog ) );
-		Result = strdup ( Filename );
-		g_free ( Filename );
+		if ( Filename != NULL )
+			{
+			Result = strdup ( Filename );
+			g_free ( Filename );
+			}
 		}
 	gtk_widget_destroy ( Dialog );
 	return Result;
@@ -129,8 +132,11 @@ char *cuiOpenFileDialog ( cuiWidget *Parent, const char *Title, const char *Filt
 	if ( gtk_dialog_run ( GTK_DIALOG ( Dialog ) ) == GTK_RESPONSE_ACCEPT )
 		{
 		char *Filename = gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER ( Dialog ) );
-		Result = strdup ( Filename );
-		g_free ( Filename );
+		if ( Filename != NULL )
+			{
+			Result = strdup ( Filename );
+			g_free ( Filename );
+			}
 		}
 	gtk_widget_destroy ( Dialog );
 

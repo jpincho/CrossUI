@@ -28,7 +28,7 @@ cuiWidget *cuiCreateTextBox ( cuiWidget *ParentWidget, const char *Text, const i
 		return NULL;
 
 	Widget->NativeHandle = gtk_entry_new ();
-	gtk_entry_set_text ( GTK_ENTRY ( Widget->NativeHandle ), Widget->Text );
+	gtk_entry_set_text ( GTK_ENTRY ( Widget->NativeHandle ), EMPTY_STRING_IF_NULL ( Widget->Text ) );
 	g_signal_connect ( Widget->NativeHandle, "changed", G_CALLBACK ( OnEntryChanged ), Widget );
 	g_signal_connect ( Widget->NativeHandle, "activate", G_CALLBACK ( OnTextBoxClicked ), Widget );
 	FinishedCreatingNewWidget ( Widget );

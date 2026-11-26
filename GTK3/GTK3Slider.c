@@ -24,9 +24,7 @@ cuiWidget *cuiCreateSlider ( cuiWidget *ParentWidget, const int X, const int Y, 
 
 void cuiSetSliderRange ( cuiWidget *Widget, const float MinValue, const float MaxValue )
 	{
-	ASSERT_FAIL ( Widget != NULL );
-	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
-	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+	if ( ( Widget == NULL ) || ( Widget->Type != cuiType_Slider ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;
 
 	gtk_range_set_range ( GTK_RANGE ( Widget->NativeHandle ), MIN ( MinValue, MaxValue ), MAX ( MinValue, MaxValue ) );
@@ -34,9 +32,7 @@ void cuiSetSliderRange ( cuiWidget *Widget, const float MinValue, const float Ma
 
 void cuiSetSliderValue ( cuiWidget *Widget, const float Value )
 	{
-	ASSERT_FAIL ( Widget != NULL );
-	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
-	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+	if ( ( Widget == NULL ) || ( Widget->Type != cuiType_Slider ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;
 
 	gtk_range_set_value ( GTK_RANGE ( Widget->NativeHandle ), Value );
@@ -44,9 +40,7 @@ void cuiSetSliderValue ( cuiWidget *Widget, const float Value )
 
 float cuiGetSliderValue ( const cuiWidget *Widget )
 	{
-	ASSERT_FAIL ( Widget != NULL );
-	ASSERT_FAIL ( Widget->Type == cuiType_Slider );
-	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+	if ( ( Widget == NULL ) || ( Widget->Type != cuiType_Slider ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return 0.0f;
 
 	return gtk_range_get_value ( GTK_RANGE ( Widget->NativeHandle ) );

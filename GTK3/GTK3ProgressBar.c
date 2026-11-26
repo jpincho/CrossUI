@@ -16,9 +16,7 @@ cuiWidget *cuiCreateProgressBar ( cuiWidget *ParentWidget, const int X, const in
 
 void cuiSetProgressBarValue ( cuiWidget *Widget, const float Value )
 	{
-	ASSERT_FAIL ( Widget != NULL );
-	ASSERT_FAIL ( Widget->Type == cuiType_ProgressBar );
-	if ( ( Widget == NULL ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
+	if ( ( Widget == NULL ) || ( Widget->Type != cuiType_ProgressBar ) || ( Widget->BeingDestroyed == true ) || ( Widget->NativeHandle == NULL ) )
 		return;
 
 	char Label[16];
